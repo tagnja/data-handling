@@ -1,5 +1,7 @@
 package com.taogen.app.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,6 +14,7 @@ public class FileUtils {
 
     /**
      * For example: text.txt -> text_2022-06-23_16-01-01.txt, text -> text_2022-06-23_16-01-01
+     *
      * @param fileName
      * @return
      */
@@ -31,5 +34,22 @@ public class FileUtils {
                     .append(YYYY_MM_SS_HH_MM_SS.format(new Date()))
                     .toString();
         }
+    }
+
+    public static void ensureFileExists(String dirOrFilePath) throws FileNotFoundException {
+        File file = new File(dirOrFilePath);
+        if (!file.exists()) {
+            throw new FileNotFoundException("Not found " + dirOrFilePath);
+        }
+    }
+
+    /**
+     * Windows 10: C:\Users\{user}\AppData\Local\Temp\
+     * Debian: /tmp
+     *
+     * @return
+     */
+    public static String getTempDir() {
+        return System.getProperty("java.io.tmpdir");
     }
 }

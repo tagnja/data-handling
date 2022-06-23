@@ -9,10 +9,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -24,11 +21,13 @@ import java.util.function.Consumer;
 public class ExcelModifierImpl implements ExcelModifier {
     @Override
     public void modifyRows(String sourceDir, String sourceFileName,
-                           Consumer<Row> rowsModifyConsumer) {
+                           Consumer<Row> rowsModifyConsumer) throws FileNotFoundException {
+        FileUtils.ensureFileExists(sourceDir);
         StringBuilder inputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
                 .append(sourceFileName);
+        FileUtils.ensureFileExists(inputFilePath.toString());
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
@@ -58,11 +57,13 @@ public class ExcelModifierImpl implements ExcelModifier {
 
     @Override
     public void modifyWorkbook(String sourceDir, String sourceFileName,
-                               Consumer<XSSFWorkbook> workbookModifyConsumer) {
+                               Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException {
+        FileUtils.ensureFileExists(sourceDir);
         StringBuilder inputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
                 .append(sourceFileName);
+        FileUtils.ensureFileExists(inputFilePath.toString());
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)

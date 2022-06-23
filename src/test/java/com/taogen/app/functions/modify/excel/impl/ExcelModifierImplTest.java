@@ -11,6 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +25,7 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     private ExcelModifier excelModifier;
 
     @Test
-    void modifyRows() {
+    void modifyRows_appendContainsSpecifiedWordToRows() throws FileNotFoundException {
         String s = "test1、test2";
         String[] names = s.split("、");
         DataFormatter formatter = new DataFormatter();
@@ -47,7 +48,7 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     }
 
     @Test
-    void modifyWorkbook() {
+    void modifyWorkbook_appendContainsSpecifiedWordToRows() throws FileNotFoundException {
         String s = "test1、test2";
         String[] names = s.split("、");
         DataFormatter formatter = new DataFormatter();
