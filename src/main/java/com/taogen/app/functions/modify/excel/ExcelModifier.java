@@ -10,7 +10,21 @@ import java.util.function.Consumer;
  * @author Taogen
  */
 public interface ExcelModifier {
-    void modifyRows(String sourceDir, String sourceFileName, Consumer<Row> rowsModifyConsumer) throws FileNotFoundException;
+    /**
+     *
+     * @param inputFilePath
+     * @param rowsModifyConsumer
+     * @return Modified file path
+     * @throws FileNotFoundException
+     */
+    String modifyRows(String inputFilePath, Consumer<Row> rowsModifyConsumer) throws FileNotFoundException;
 
-    void modifyWorkbook(String sourceDir, String sourceFileName, Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException;
+    /**
+     *
+     * @param inputFilePath
+     * @param workbookModifyConsumer
+     * @return Modified file path
+     * @throws FileNotFoundException
+     */
+    String modifyWorkbook(String inputFilePath, Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException;
 }

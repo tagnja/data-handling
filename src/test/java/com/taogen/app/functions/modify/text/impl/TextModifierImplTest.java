@@ -2,10 +2,12 @@ package com.taogen.app.functions.modify.text.impl;
 
 import com.taogen.app.SpringBootBaseTest;
 import com.taogen.app.functions.modify.text.TextModifier;
+import com.taogen.app.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,9 +19,22 @@ class TextModifierImplTest extends SpringBootBaseTest {
     private TextModifier textModifier;
 
     @Test
-    void splitModifyAndJoin() {
+    void splitModifyAndJoin_string() {
         String s = "Tom、Jack、John";
         Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
-        textModifier.splitModifyAndJoin(s, "、", function, " or ");
+        String handledText = textModifier.splitModifyAndJoin(s, "、", function, " or ");
+        String expect = "title like \"%Tom%\" or content like \"%Tom%\" or title like \"%Jack%\" or content like \"%Jack%\" or title like \"%John%\" or content like \"%John%\"";
+        assertEquals(expect, handledText);
+    }
+
+    @Test
+    void splitModifyAndJoinWithFile() throws IOException {
+        String inputFilePath = FileUtils.getFilePathByFileClassPath("testfile/functions/text/splitModifyAndJoin.txt");
+        Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
+        String handledFilePath = textModifier.splitModifyAndJoinWithFile(inputFilePath,
+                "、", function, " or ");
+        String handledText = FileUtils.getTextFromFile(handledFilePath);
+        String expect = "title like \"%Tom%\" or content like \"%Tom%\" or title like \"%Jack%\" or content like \"%Jack%\" or title like \"%John%\" or content like \"%John%\" or title like \"%Jackson%\" or content like \"%Jackson%\"";
+        assertEquals(expect, handledText);
     }
 }

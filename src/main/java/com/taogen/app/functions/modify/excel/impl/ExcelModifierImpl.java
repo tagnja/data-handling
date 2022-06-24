@@ -20,14 +20,11 @@ import java.util.function.Consumer;
 @Slf4j
 public class ExcelModifierImpl implements ExcelModifier {
     @Override
-    public void modifyRows(String sourceDir, String sourceFileName,
+    public String modifyRows(String inputFilePath,
                            Consumer<Row> rowsModifyConsumer) throws FileNotFoundException {
-        FileUtils.ensureFileExists(sourceDir);
-        StringBuilder inputFilePath = new StringBuilder()
-                .append(sourceDir)
-                .append(File.separator)
-                .append(sourceFileName);
-        FileUtils.ensureFileExists(inputFilePath.toString());
+        FileUtils.ensureFileExists(inputFilePath);
+        String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
+        String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
@@ -45,25 +42,22 @@ public class ExcelModifierImpl implements ExcelModifier {
             try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
                     new FileOutputStream(outputFilePath.toString()))) {
                 workbook.write(bufferedOutputStream);
-                log.info("Modified file: {}", outputFilePath);
             }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InvalidFormatException e) {
             e.printStackTrace();
         }
-
+        log.info("output file path: {}", outputFilePath);
+        return outputFilePath.toString();
     }
 
     @Override
-    public void modifyWorkbook(String sourceDir, String sourceFileName,
+    public String modifyWorkbook(String inputFilePath,
                                Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException {
-        FileUtils.ensureFileExists(sourceDir);
-        StringBuilder inputFilePath = new StringBuilder()
-                .append(sourceDir)
-                .append(File.separator)
-                .append(sourceFileName);
-        FileUtils.ensureFileExists(inputFilePath.toString());
+        FileUtils.ensureFileExists(inputFilePath);
+        String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
+        String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
@@ -75,12 +69,13 @@ public class ExcelModifierImpl implements ExcelModifier {
             try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
                     new FileOutputStream(outputFilePath.toString()))) {
                 workbook.write(bufferedOutputStream);
-                log.info("Modified file: {}", outputFilePath);
             }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InvalidFormatException e) {
             e.printStackTrace();
         }
+        log.info("output file path: {}", outputFilePath);
+        return outputFilePath.toString();
     }
 }

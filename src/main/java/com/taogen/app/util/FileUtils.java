@@ -1,7 +1,11 @@
 package com.taogen.app.util;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.StringUtils;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,5 +55,70 @@ public class FileUtils {
      */
     public static String getTempDir() {
         return System.getProperty("java.io.tmpdir");
+    }
+
+    public static String getDirPathByFilePath(String filePath) {
+        if (!StringUtils.hasLength(filePath)) {
+            return null;
+        }
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            return file.getParentFile().getAbsolutePath();
+        }
+        return null;
+    }
+
+    public static String getFileNameByFilePath(String filePath) {
+        if (!StringUtils.hasLength(filePath)) {
+            return null;
+        }
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            return file.getName();
+        }
+        return null;
+    }
+
+    /**
+     * the root of file is 'src/main/resources' or 'src/test/resources'
+     *
+     * @param fileClassPath
+     * @return
+     * @throws IOException
+     */
+    public static String getFilePathByFileClassPath(String fileClassPath) throws IOException {
+        return new ClassPathResource(fileClassPath).getFile().getAbsolutePath();
+    }
+
+    public static String getTextFromFile(String textFilePath) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader reader = getBufferedReaderWithCharset(textFilePath, StandardCharsets.UTF_8)) {
+            int len;
+            char[] buf = new char[1024];
+            while ((len = reader.read(buf)) != -1) {
+                stringBuilder.append(buf, 0, len);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     * The one-arguments constructors of FileReader always use the platform default encoding which is generally a bad idea.
+     * Since Java 11 FileReader has also gained constructors that accept an encoding: new FileReader(file, charset) and new FileReader(fileName, charset).
+     * In earlier versions of java, you need to use new InputStreamReader(new FileInputStream(pathToFile), <encoding>).
+     *
+     * @param filePath
+     * @param charset
+     * @return
+     * @throws FileNotFoundException
+     */
+    public static BufferedReader getBufferedReaderWithCharset(String filePath,
+                                                              Charset charset) throws FileNotFoundException {
+        return new BufferedReader(new InputStreamReader(
+                new FileInputStream(filePath), charset));
     }
 }

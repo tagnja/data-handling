@@ -2,6 +2,8 @@ package com.taogen.app.functions.modify.excel.impl;
 
 import com.taogen.app.SpringBootBaseTest;
 import com.taogen.app.functions.modify.excel.ExcelModifier;
+import com.taogen.app.util.ExcelUtils;
+import com.taogen.app.util.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -11,12 +13,16 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class ExcelModifierImplTest extends SpringBootBaseTest {
@@ -25,9 +31,9 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     private ExcelModifier excelModifier;
 
     @Test
-    void modifyRows_appendContainsSpecifiedWordToRows() throws FileNotFoundException {
-        String s = "test1、test2";
-        String[] names = s.split("、");
+    void modifyRows_appendContainsSpecifiedWordToRows() throws IOException {
+        String keywords = "hello,world,developer";
+        String[] names = keywords.split(",");
         DataFormatter formatter = new DataFormatter();
         Consumer<Row> rowsModifyConsumer = row -> {
             Cell titleCell = row.getCell(1);
@@ -40,17 +46,25 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
                     .filter(item -> title.contains(item) || content.contains(item))
                     .collect(Collectors.toList());
             System.out.println("keywords: " + containsKeywords);
-            Cell cell = row.createCell(7);
-            cell.setCellValue(String.join("、", containsKeywords));
+            Cell cell = row.createCell(3);
+            cell.setCellValue(String.join(",", containsKeywords));
         };
-        excelModifier.modifyRows("C:/Users/Taogen/Desktop", "" +
-                "test.xlsx", rowsModifyConsumer);
+        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
+        String outputFilePath = excelModifier.modifyRows(FileUtils.getFilePathByFileClassPath(inputFileClassPath),
+                rowsModifyConsumer);
+        Predicate<XSSFWorkbook> excelPredicate = workbook -> {
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            return Objects.equals("hello,developer", sheet.getRow(2).getCell(3).getStringCellValue()) &&
+                    Objects.equals("hello", sheet.getRow(4).getCell(3).getStringCellValue()) &&
+                    Objects.equals("hello,world", sheet.getRow(7).getCell(3).getStringCellValue());
+        };
+        assertTrue(ExcelUtils.predicateExcel(outputFilePath, excelPredicate));
     }
 
     @Test
-    void modifyWorkbook_appendContainsSpecifiedWordToRows() throws FileNotFoundException {
-        String s = "test1、test2";
-        String[] names = s.split("、");
+    void modifyWorkbook_appendContainsSpecifiedWordToRows() throws IOException {
+        String keywords = "hello,world,developer";
+        String[] names = keywords.split(",");
         DataFormatter formatter = new DataFormatter();
         Consumer<XSSFWorkbook> workbookModifyConsumer = workbook -> {
             XSSFSheet sheet = workbook.getSheetAt(0);
@@ -72,7 +86,15 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
                 cell.setCellValue(String.join("、", containsKeywords));
             }
         };
-        excelModifier.modifyWorkbook("C:/Users/Taogen/Desktop", "" +
-                "test.xlsx", workbookModifyConsumer);
+        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
+        String outputFilePath = excelModifier.modifyWorkbook(FileUtils.getFilePathByFileClassPath(inputFileClassPath),
+                workbookModifyConsumer);
+        Predicate<XSSFWorkbook> excelPredicate = workbook -> {
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            return Objects.equals("hello,developer", sheet.getRow(2).getCell(3).getStringCellValue()) &&
+                    Objects.equals("hello", sheet.getRow(4).getCell(3).getStringCellValue()) &&
+                    Objects.equals("hello,world", sheet.getRow(7).getCell(3).getStringCellValue());
+        };
+        assertTrue(ExcelUtils.predicateExcel(outputFilePath, excelPredicate));
     }
 }
