@@ -1,8 +1,8 @@
 package com.taogen.app.functions.modify.text.impl;
 
 import com.taogen.app.functions.modify.text.TextModifier;
-import com.taogen.app.util.FileUtils;
-import com.taogen.app.util.StringUtils;
+import com.taogen.commons.datatypes.string.StringUtils;
+import com.taogen.commons.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -31,8 +31,8 @@ public class TextModifierImpl implements TextModifier {
 
     @Override
     public String splitModifyAndJoinWithFile(String inputFilePath,
-                              String splitStr, Function<String, String> itemModifyFunc,
-                              String joinStr) throws FileNotFoundException {
+                                             String splitStr, Function<String, String> itemModifyFunc,
+                                             String joinStr) throws FileNotFoundException {
         FileUtils.ensureFileExists(inputFilePath);
         String inputFileDir = FileUtils.getDirPathByFilePath(inputFilePath);
         log.debug("inputFileDir: {}", inputFileDir);

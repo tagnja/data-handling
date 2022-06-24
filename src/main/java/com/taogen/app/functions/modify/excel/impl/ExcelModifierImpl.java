@@ -1,7 +1,7 @@
 package com.taogen.app.functions.modify.excel.impl;
 
 import com.taogen.app.functions.modify.excel.ExcelModifier;
-import com.taogen.app.util.FileUtils;
+import com.taogen.commons.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Row;
@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 public class ExcelModifierImpl implements ExcelModifier {
     @Override
     public String modifyRows(String inputFilePath,
-                           Consumer<Row> rowsModifyConsumer) throws FileNotFoundException {
+                             Consumer<Row> rowsModifyConsumer) throws FileNotFoundException {
         FileUtils.ensureFileExists(inputFilePath);
         String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
         String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);
@@ -54,7 +54,7 @@ public class ExcelModifierImpl implements ExcelModifier {
 
     @Override
     public String modifyWorkbook(String inputFilePath,
-                               Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException {
+                                 Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException {
         FileUtils.ensureFileExists(inputFilePath);
         String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
         String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);

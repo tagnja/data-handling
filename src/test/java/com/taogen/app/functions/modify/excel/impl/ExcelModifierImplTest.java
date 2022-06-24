@@ -3,7 +3,7 @@ package com.taogen.app.functions.modify.excel.impl;
 import com.taogen.app.SpringBootBaseTest;
 import com.taogen.app.functions.modify.excel.ExcelModifier;
 import com.taogen.app.util.ExcelUtils;
-import com.taogen.app.util.FileUtils;
+import com.taogen.commons.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +32,7 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     private ExcelModifier excelModifier;
 
     @Test
-    void modifyRows_appendContainsSpecifiedWordToRows() throws IOException {
+    void modifyRows_appendContainsSpecifiedWordToRows() throws IOException, URISyntaxException {
         String keywords = "hello,world,developer";
         String[] names = keywords.split(",");
         DataFormatter formatter = new DataFormatter();
@@ -62,7 +63,7 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     }
 
     @Test
-    void modifyWorkbook_appendContainsSpecifiedWordToRows() throws IOException {
+    void modifyWorkbook_appendContainsSpecifiedWordToRows() throws IOException, URISyntaxException {
         String keywords = "hello,world,developer";
         String[] names = keywords.split(",");
         DataFormatter formatter = new DataFormatter();

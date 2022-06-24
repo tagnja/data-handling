@@ -73,18 +73,18 @@
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.4.3</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.github.pagehelper</groupId>-->
-<!--            <artifactId>pagehelper-spring-boot-starter</artifactId>-->
-<!--            <version>1.3.1</version>-->
-<!--            <exclusions>-->
-<!--                &lt;!&ndash; if use mybatis-plus to excluse mybatis &ndash;&gt;-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.mybatis</groupId>-->
-<!--                    <artifactId>mybatis</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.pagehelper</groupId>-->
+        <!--            <artifactId>pagehelper-spring-boot-starter</artifactId>-->
+        <!--            <version>1.3.1</version>-->
+        <!--            <exclusions>-->
+        <!--                &lt;!&ndash; if use mybatis-plus to excluse mybatis &ndash;&gt;-->
+        <!--                <exclusion>-->
+        <!--                    <groupId>org.mybatis</groupId>-->
+        <!--                    <artifactId>mybatis</artifactId>-->
+        <!--                </exclusion>-->
+        <!--            </exclusions>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
@@ -93,6 +93,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
+
+        <!-- tools -->
+        <dependency>
+            <groupId>com.github.tagnja</groupId>
+            <artifactId>tg-java-commons</artifactId>
+            <version>c5d85b3f13</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
@@ -106,6 +114,10 @@
     </dependencies>
 
     <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
         <repository>
             <id>aliyun-repos</id>
             <url>https://maven.aliyun.com/repository/public</url>
