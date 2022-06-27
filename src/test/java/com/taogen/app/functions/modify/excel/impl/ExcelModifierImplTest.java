@@ -26,10 +26,9 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-class ExcelModifierImplTest extends SpringBootBaseTest {
+class ExcelModifierImplTest {
 
-    @Autowired
-    private ExcelModifier excelModifier;
+    private ExcelModifier excelModifier = new ExcelModifierImpl();
 
     @Test
     void modifyRows_appendContainsSpecifiedWordToRows() throws IOException, URISyntaxException {

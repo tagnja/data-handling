@@ -14,10 +14,9 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
-class TextModifierImplTest extends SpringBootBaseTest {
+class TextModifierImplTest {
 
-    @Autowired
-    private TextModifier textModifier;
+    private TextModifier textModifier = new TextModifierImpl();
 
     @Test
     void splitModifyAndJoin_string() {
