@@ -19,20 +19,20 @@ import java.util.stream.Collectors;
 @Component
 public class TextModifierImpl implements TextModifier {
     @Override
-    public String splitModifyAndJoin(String source, String splitStr, Function<String, String> itemModifyFunc, String joinStr) {
-        String[] splitStrArray = source.split(splitStr);
+    public String splitModifyAndJoin(String source, String splitDelimiter, Function<String, String> itemModifyFunc, String joinDelimiter) {
+        String[] splitStrArray = source.split(splitDelimiter);
         log.debug("split array: {}", Arrays.toString(splitStrArray));
         String result = Arrays.stream(splitStrArray)
                 .map(itemModifyFunc)
-                .collect(Collectors.joining(joinStr));
+                .collect(Collectors.joining(joinDelimiter));
         log.info("result is: {}", result);
         return result;
     }
 
     @Override
     public String splitModifyAndJoinWithFile(String inputFilePath,
-                                             String splitStr, Function<String, String> itemModifyFunc,
-                                             String joinStr) throws FileNotFoundException {
+                                             String splitDelimiter, Function<String, String> itemModifyFunc,
+                                             String joinDelimiter) throws FileNotFoundException {
         FileUtils.ensureFileExists(inputFilePath);
         String inputFileDir = FileUtils.getDirPathByFilePath(inputFilePath);
         log.debug("inputFileDir: {}", inputFileDir);
@@ -53,7 +53,7 @@ public class TextModifierImpl implements TextModifier {
             String toModifyString = stringBuilder.toString();
             toModifyString = StringUtils.removeNewLineCharacters(toModifyString);
             String handledText = splitModifyAndJoin(toModifyString,
-                    splitStr, itemModifyFunc, joinStr);
+                    splitDelimiter, itemModifyFunc, joinDelimiter);
             try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputFilePath))) {
                 bufferedWriter.write(handledText);
             }

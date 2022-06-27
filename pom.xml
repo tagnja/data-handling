@@ -98,7 +98,7 @@
         <dependency>
             <groupId>com.github.tagnja</groupId>
             <artifactId>tg-java-commons</artifactId>
-            <version>c5d85b3f13</version>
+            <version>401211ffd7</version>
         </dependency>
 
         <dependency>

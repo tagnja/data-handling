@@ -9,25 +9,25 @@ import java.util.function.Function;
 public interface TextModifier {
     /**
      * @param source
-     * @param splitStr
+     * @param splitDelimiter special delimiters need escape like "\\|"
      * @param itemModifyFunc
-     * @param joinStr
+     * @param joinDelimiter
      * @return Modified string
      */
-    String splitModifyAndJoin(String source, String splitStr,
+    String splitModifyAndJoin(String source, String splitDelimiter,
                               Function<String, String> itemModifyFunc,
-                              String joinStr);
+                              String joinDelimiter);
 
     /**
      * @param inputFilePath
-     * @param splitStr
+     * @param splitDelimiter special delimiters need escape like "\\|"
      * @param itemModifyFunc
-     * @param joinStr
+     * @param joinDelimiter
      * @return Modified file path
      * @throws FileNotFoundException
      */
     String splitModifyAndJoinWithFile(String inputFilePath,
-                              String splitStr, Function<String, String> itemModifyFunc,
-                              String joinStr) throws FileNotFoundException;
+                              String splitDelimiter, Function<String, String> itemModifyFunc,
+                              String joinDelimiter) throws FileNotFoundException;
 
 }
