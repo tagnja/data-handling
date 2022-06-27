@@ -22,19 +22,24 @@ class TextModifierImplTest extends SpringBootBaseTest {
     @Test
     void splitModifyAndJoin_string() {
         String s = "Tom、Jack、John";
+        String delimiter = "、";
         Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
-        String handledText = textModifier.splitModifyAndJoin(s, "、", function, " or ");
+        String handledText = textModifier.splitModifyAndJoin(s, delimiter, function, " or ");
+        // test
         String expect = "title like \"%Tom%\" or content like \"%Tom%\" or title like \"%Jack%\" or content like \"%Jack%\" or title like \"%John%\" or content like \"%John%\"";
         assertEquals(expect, handledText);
     }
 
     @Test
     void splitModifyAndJoinWithFile() throws IOException, URISyntaxException {
-        String inputFilePath = FileUtils.getFilePathByFileClassPath("testfile/functions/text/splitModifyAndJoin.txt");
+        String delimiter = "、";
+        String intputFileClassPath = "testfile/functions/text/splitModifyAndJoin.txt";
+        String inputFilePath = FileUtils.getFilePathByFileClassPath(intputFileClassPath);
         Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
         String handledFilePath = textModifier.splitModifyAndJoinWithFile(inputFilePath,
-                "、", function, " or ");
+                delimiter, function, " or ");
         String handledText = FileUtils.getTextFromFile(handledFilePath);
+        // test
         String expect = "title like \"%Tom%\" or content like \"%Tom%\" or title like \"%Jack%\" or content like \"%Jack%\" or title like \"%John%\" or content like \"%John%\" or title like \"%Jackson%\" or content like \"%Jackson%\"";
         assertEquals(expect, handledText);
     }

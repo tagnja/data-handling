@@ -4,6 +4,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
@@ -11,20 +12,18 @@ import java.util.function.Consumer;
  */
 public interface ExcelModifier {
     /**
-     *
      * @param inputFilePath
      * @param rowsModifyConsumer
      * @return Modified file path
      * @throws FileNotFoundException
      */
-    String modifyRows(String inputFilePath, Consumer<Row> rowsModifyConsumer) throws FileNotFoundException;
+    String modifyRows(String inputFilePath, Consumer<Row> rowsModifyConsumer) throws IOException;
 
     /**
-     *
      * @param inputFilePath
      * @param workbookModifyConsumer
      * @return Modified file path
      * @throws FileNotFoundException
      */
-    String modifyWorkbook(String inputFilePath, Consumer<XSSFWorkbook> workbookModifyConsumer) throws FileNotFoundException;
+    String modifyWorkbook(String inputFilePath, Consumer<XSSFWorkbook> workbookModifyConsumer) throws IOException;
 }

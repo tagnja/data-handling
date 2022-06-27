@@ -34,7 +34,12 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     @Test
     void modifyRows_appendContainsSpecifiedWordToRows() throws IOException, URISyntaxException {
         String keywords = "hello,world,developer";
-        String[] names = keywords.split(",");
+        String delimiter = ",";
+        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
+        String inputFilePath = FileUtils.getFilePathByFileClassPath(inputFileClassPath);
+        int appendToColumn = 3;
+        // start to call modifyWorkbook
+        String[] names = keywords.split(delimiter);
         DataFormatter formatter = new DataFormatter();
         Consumer<Row> rowsModifyConsumer = row -> {
             Cell titleCell = row.getCell(1);
@@ -47,17 +52,16 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
                     .filter(item -> title.contains(item) || content.contains(item))
                     .collect(Collectors.toList());
             System.out.println("keywords: " + containsKeywords);
-            Cell cell = row.createCell(3);
-            cell.setCellValue(String.join(",", containsKeywords));
+            Cell cell = row.createCell(appendToColumn);
+            cell.setCellValue(String.join(delimiter, containsKeywords));
         };
-        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
-        String outputFilePath = excelModifier.modifyRows(FileUtils.getFilePathByFileClassPath(inputFileClassPath),
-                rowsModifyConsumer);
+        String outputFilePath = excelModifier.modifyRows(inputFilePath, rowsModifyConsumer);
+        // test output file
         Predicate<XSSFWorkbook> excelPredicate = workbook -> {
             XSSFSheet sheet = workbook.getSheetAt(0);
-            return Objects.equals("hello,developer", sheet.getRow(2).getCell(3).getStringCellValue()) &&
-                    Objects.equals("hello", sheet.getRow(4).getCell(3).getStringCellValue()) &&
-                    Objects.equals("hello,world", sheet.getRow(7).getCell(3).getStringCellValue());
+            return Objects.equals("hello,developer", sheet.getRow(2).getCell(appendToColumn).getStringCellValue()) &&
+                    Objects.equals("hello", sheet.getRow(4).getCell(appendToColumn).getStringCellValue()) &&
+                    Objects.equals("hello,world", sheet.getRow(7).getCell(appendToColumn).getStringCellValue());
         };
         assertTrue(ExcelUtils.predicateExcel(outputFilePath, excelPredicate));
     }
@@ -65,7 +69,12 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
     @Test
     void modifyWorkbook_appendContainsSpecifiedWordToRows() throws IOException, URISyntaxException {
         String keywords = "hello,world,developer";
-        String[] names = keywords.split(",");
+        String delimiter = ",";
+        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
+        String inputFilePath = FileUtils.getFilePathByFileClassPath(inputFileClassPath);
+        int appendToColumn = 3;
+        // start to call modifyWorkbook
+        String[] names = keywords.split(delimiter);
         DataFormatter formatter = new DataFormatter();
         Consumer<XSSFWorkbook> workbookModifyConsumer = workbook -> {
             XSSFSheet sheet = workbook.getSheetAt(0);
@@ -83,18 +92,17 @@ class ExcelModifierImplTest extends SpringBootBaseTest {
                         .filter(item -> title.contains(item) || content.contains(item))
                         .collect(Collectors.toList());
                 System.out.println("keywords: " + containsKeywords);
-                Cell cell = row.createCell(7);
-                cell.setCellValue(String.join("、", containsKeywords));
+                Cell cell = row.createCell(appendToColumn);
+                cell.setCellValue(String.join(delimiter, containsKeywords));
             }
         };
-        String inputFileClassPath = "testfile/functions/excel/modifyRows_appendContainsSpecifiedWordToRows.xlsx";
-        String outputFilePath = excelModifier.modifyWorkbook(FileUtils.getFilePathByFileClassPath(inputFileClassPath),
-                workbookModifyConsumer);
+        String outputFilePath = excelModifier.modifyWorkbook(inputFilePath, workbookModifyConsumer);
+        // test output file
         Predicate<XSSFWorkbook> excelPredicate = workbook -> {
             XSSFSheet sheet = workbook.getSheetAt(0);
-            return Objects.equals("hello,developer", sheet.getRow(2).getCell(3).getStringCellValue()) &&
-                    Objects.equals("hello", sheet.getRow(4).getCell(3).getStringCellValue()) &&
-                    Objects.equals("hello,world", sheet.getRow(7).getCell(3).getStringCellValue());
+            return Objects.equals("hello,developer", sheet.getRow(2).getCell(appendToColumn).getStringCellValue()) &&
+                    Objects.equals("hello", sheet.getRow(4).getCell(appendToColumn).getStringCellValue()) &&
+                    Objects.equals("hello,world", sheet.getRow(7).getCell(appendToColumn).getStringCellValue());
         };
         assertTrue(ExcelUtils.predicateExcel(outputFilePath, excelPredicate));
     }
