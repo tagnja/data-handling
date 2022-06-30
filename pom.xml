@@ -96,8 +96,8 @@
 
         <!-- tools -->
         <dependency>
-            <groupId>com.github.tagnja</groupId>
-            <artifactId>tg-java-commons</artifactId>
+            <groupId>com.github.taogen-lib</groupId>
+            <artifactId>taogen-commons</artifactId>
             <version>401211ffd7</version>
         </dependency>
 
