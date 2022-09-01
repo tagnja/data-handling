@@ -1,6 +1,7 @@
 package com.taogen.app.functions.modify.excel.impl;
 
 import com.taogen.app.functions.modify.excel.ExcelModifier;
+import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.commons.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
@@ -23,9 +24,9 @@ public class ExcelModifierImpl implements ExcelModifier {
     @Override
     public String modifyRows(String inputFilePath,
                              Consumer<Row> rowsModifyConsumer) throws IOException {
-        FileUtils.ensureFileExists(inputFilePath);
-        String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
-        String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);
+        DirectoryUtils.ensureFileDirExist(inputFilePath);
+        String sourceDir = DirectoryUtils.getDirPathByFile(new File(inputFilePath));
+        String sourceFileName = FileUtils.extractFileNameFromFilePath(inputFilePath);
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)
@@ -55,9 +56,9 @@ public class ExcelModifierImpl implements ExcelModifier {
     @Override
     public String modifyWorkbook(String inputFilePath,
                                  Consumer<XSSFWorkbook> workbookModifyConsumer) throws IOException {
-        FileUtils.ensureFileExists(inputFilePath);
-        String sourceDir = FileUtils.getDirPathByFilePath(inputFilePath);
-        String sourceFileName = FileUtils.getFileNameByFilePath(inputFilePath);
+        DirectoryUtils.ensureFileDirExist(inputFilePath);
+        String sourceDir = DirectoryUtils.getDirPathByFile(new File(inputFilePath));
+        String sourceFileName = FileUtils.extractFileNameFromFilePath(inputFilePath);
         StringBuilder outputFilePath = new StringBuilder()
                 .append(sourceDir)
                 .append(File.separator)

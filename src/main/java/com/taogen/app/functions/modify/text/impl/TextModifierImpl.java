@@ -1,8 +1,9 @@
 package com.taogen.app.functions.modify.text.impl;
 
 import com.taogen.app.functions.modify.text.TextModifier;
-import com.taogen.commons.datatypes.string.StringUtils;
+import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.commons.io.FileUtils;
+import com.taogen.commons.io.IOUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,17 +34,19 @@ public class TextModifierImpl implements TextModifier {
     public String splitModifyAndJoinWithFile(String inputFilePath,
                                              String splitDelimiter, Function<String, String> itemModifyFunc,
                                              String joinDelimiter) throws FileNotFoundException {
-        FileUtils.ensureFileExists(inputFilePath);
-        String inputFileDir = FileUtils.getDirPathByFilePath(inputFilePath);
+        if (!FileUtils.doesFileExist(inputFilePath)) {
+            throw new RuntimeException("The input file does not exist");
+        }
+        String inputFileDir = DirectoryUtils.getDirPathByFile(new File(inputFilePath));
         log.debug("inputFileDir: {}", inputFileDir);
-        String inputFileName = FileUtils.getFileNameByFilePath(inputFilePath);
+        String inputFileName = FileUtils.extractFileNameFromFilePath(inputFilePath);
         log.debug("inputFileName: {}", inputFileName);
         String outputFilePath = new StringBuilder()
                 .append(inputFileDir)
                 .append(File.separator)
                 .append(FileUtils.appendDateTimeToFileName(inputFileName))
                 .toString();
-        try (BufferedReader bufferedReader = FileUtils.getBufferedReaderWithCharset(inputFilePath, StandardCharsets.UTF_8)) {
+        try (BufferedReader bufferedReader = IOUtils.getBufferedReaderWithCharset(new FileInputStream(inputFilePath), StandardCharsets.UTF_8)) {
             StringBuilder stringBuilder = new StringBuilder();
             char[] buf = new char[1024];
             int len;
@@ -51,7 +54,7 @@ public class TextModifierImpl implements TextModifier {
                 stringBuilder.append(buf, 0, len);
             }
             String toModifyString = stringBuilder.toString();
-            toModifyString = StringUtils.removeNewLineCharacters(toModifyString);
+            toModifyString = IOUtils.removeNewLineCharacters(toModifyString);
             String handledText = splitModifyAndJoin(toModifyString,
                     splitDelimiter, itemModifyFunc, joinDelimiter);
             try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputFilePath))) {
