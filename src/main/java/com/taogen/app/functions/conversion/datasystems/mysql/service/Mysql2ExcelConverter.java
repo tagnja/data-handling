@@ -1,6 +1,6 @@
-package com.taogen.app.functions.conversion.datasystems.service;
+package com.taogen.app.functions.conversion.datasystems.mysql.service;
 
-import com.taogen.app.functions.conversion.datasystems.vo.SqlQueryParam;
+import com.taogen.app.functions.conversion.datasystems.mysql.vo.SqlQueryParam;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package com.taogen.app.functions.conversion.datasystems.vo;
+package com.taogen.app.functions.conversion.datasystems.mysql.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
