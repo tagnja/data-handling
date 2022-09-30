@@ -13,4 +13,15 @@ public class SqlQueryParam {
      * java.sql.Types
      */
     private int[] argTypes;
+
+    private String primaryKeyColumn = "id";
+
+    private Boolean batchFetch = false;
+
+    private Integer batchSize = 50;
+
+    /**
+     * TODO
+     */
+    private Boolean currentFetch = false;
 }

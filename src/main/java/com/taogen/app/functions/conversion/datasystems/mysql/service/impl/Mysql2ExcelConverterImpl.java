@@ -4,24 +4,24 @@ import com.taogen.app.functions.conversion.datasystems.mysql.service.Mysql2Excel
 import com.taogen.app.functions.conversion.datasystems.mysql.vo.SqlQueryParam;
 import com.taogen.app.functions.conversion.datasystems.mysql.vo.TableLabelAndData;
 import com.taogen.app.util.ExcelUtils;
+import com.taogen.app.util.MysqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Taogen
@@ -43,6 +43,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         long writeExcelStartTime = System.currentTimeMillis();
         String outputPath = writeTableLabelAndDataToExcel(tableLabelAndData, outputFileDir, outputFileName);
         log.info("write to excel cost time: {} ms", System.currentTimeMillis() - writeExcelStartTime);
+        log.info("Elapsed time is {} ms", System.currentTimeMillis() - fetchStartTime);
         log.info("output file path: {}", outputPath);
         return outputPath;
     }
@@ -50,29 +51,112 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
     private TableLabelAndData getTableLabelsAndData(SqlQueryParam sqlQueryParam) {
         String sql = sqlQueryParam.getSql();
         log.info("sql is: {}", sql);
+        Long count = getCount(sqlQueryParam);
+        log.info("total: {} row(s)", count);
+        List<String> labels = getQueryLabels(sqlQueryParam);
+        List<List<Object>> valuesList;
+        if (sqlQueryParam.getBatchFetch()) {
+            valuesList = getValueListBatch(sqlQueryParam, count);
+        } else {
+            valuesList = getValueList(sqlQueryParam);
+        }
+        log.info("values list size: {}", valuesList.size());
+        return new TableLabelAndData(labels, valuesList);
+    }
+
+    private Long getCount(SqlQueryParam sqlQueryParam) {
+        String sql = sqlQueryParam.getSql();
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
+        String selectCountSql = MysqlUtils.wrapperQueryToSelectCount(sql);
+        log.info("select count sql: {}", selectCountSql);
+        Map<String, Object> selectCountResult = jdbcTemplate.queryForMap(selectCountSql, args, argTypes);
+        return Long.valueOf(selectCountResult.get("count").toString());
+    }
+
+    private List<List<Object>> getValueList(SqlQueryParam sqlQueryParam) {
+        String sql = sqlQueryParam.getSql();
+        Object[] args = sqlQueryParam.getArgs();
+        int[] argTypes = sqlQueryParam.getArgTypes();
+        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, args, argTypes);
+        SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+        int columnNum = metaData.getColumnCount();
+        return getQueryResultData(sqlRowSet, columnNum);
+    }
+
+    /**
+     * set startId to fetch a page of data
+     * @param sqlQueryParam
+     * @param count
+     * @return
+     */
+    private List<List<Object>> getValueListBatch(SqlQueryParam sqlQueryParam, Long count) {
+        String sql = sqlQueryParam.getSql();
+        Object[] args = sqlQueryParam.getArgs();
+        int[] argTypes = sqlQueryParam.getArgTypes();
+        Integer batchSize = sqlQueryParam.getBatchSize();
+        String selectFirstRowSql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, 1L);
+        log.info("select first row sql: {}", selectFirstRowSql);
+        Map<String, Object> firstRow = jdbcTemplate.queryForMap(selectFirstRowSql, args, argTypes);
+        log.debug("first row: {}", firstRow);
+        Long firstRowId = Long.valueOf(firstRow.get(sqlQueryParam.getPrimaryKeyColumn()).toString());
+        Long startId = firstRowId - 1;
+        List<List<Object>> resultValueList = new ArrayList<>();
+        int start = 0;
+        while (start < count) {
+            long size = batchSize > (count - start) ? (count - start) : batchSize;
+            String primaryKeyPredicate = new StringBuilder()
+                    .append(" ")
+                    .append(sqlQueryParam.getPrimaryKeyColumn())
+                    .append(" > ")
+                    .append(startId)
+                    .append(" ")
+                    .toString();
+            String batchSelectSql = MysqlUtils.wrapperPredicateToSql(sql, primaryKeyPredicate);
+            batchSelectSql = MysqlUtils.wrapperQueryToSelectLimitSize(batchSelectSql, size);
+            log.info("batch select sql: {}", batchSelectSql);
+            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(batchSelectSql, args, argTypes);
+            SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+            int columnNum = metaData.getColumnCount();
+            List<List<Object>> queryResultData = getQueryResultData(sqlRowSet, columnNum);
+            resultValueList.addAll(queryResultData);
+            start += batchSize;
+            startId = Long.valueOf(queryResultData.get(queryResultData.size() - 1).get(0).toString());
+        }
+        return resultValueList;
+    }
+
+    private List<String> getQueryLabels(SqlQueryParam sqlQueryParam) {
+        String sql = sqlQueryParam.getSql();
+        Object[] args = sqlQueryParam.getArgs();
+        int[] argTypes = sqlQueryParam.getArgTypes();
+        String selectLabelSql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, 0L);
+        log.info("select label sql: {}", selectLabelSql);
+        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(selectLabelSql, args, argTypes);
+        SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+        return getQueryLabelsByMetaData(metaData);
+    }
+
+    private List<List<Object>> getQueryResultData(SqlRowSet sqlRowSet, int columnNum) {
         List<List<Object>> valuesList = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        jdbcTemplate.query(sql, args, argTypes, new RowCallbackHandler() {
-            @Override
-            public void processRow(ResultSet rs) throws SQLException {
-                ResultSetMetaData rsMetaData = rs.getMetaData();
-                int columnNum = rsMetaData.getColumnCount();
-                if (labels.isEmpty()) {
-                    for (int i = 0; i < columnNum; i++) {
-                        labels.add(rsMetaData.getColumnLabel(i + 1));
-                    }
-                }
-                List<Object> values = new ArrayList<>();
-                for (int i = 0; i < columnNum; i++) {
-                    Object value = rs.getObject(i + 1);
-                    values.add(value);
-                }
-                valuesList.add(values);
+        while (sqlRowSet.next()) {
+            List<Object> values = new ArrayList<>();
+            for (int i = 0; i < columnNum; i++) {
+                Object value = sqlRowSet.getObject(i + 1);
+                values.add(value);
             }
-        });
-        return new TableLabelAndData(labels, valuesList);
+            valuesList.add(values);
+        }
+        return valuesList;
+    }
+
+    private List<String> getQueryLabelsByMetaData(SqlRowSetMetaData sqlRowSetMetaData) {
+        List<String> labels = new ArrayList<>();
+        int columnNum = sqlRowSetMetaData.getColumnCount();
+        for (int i = 0; i < columnNum; i++) {
+            labels.add(sqlRowSetMetaData.getColumnLabel(i + 1));
+        }
+        return labels;
     }
 
     private String writeTableLabelAndDataToExcel(TableLabelAndData tableLabelAndData, String outputFileDir, String outputFileName) throws IOException {
