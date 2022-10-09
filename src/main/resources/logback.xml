@@ -14,7 +14,7 @@
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${LOG_DIR}/sys.log</file>
-        <append>true</append>
+        <append>false</append>
         <encoder>
             <pattern>${log.pattern}</pattern>
         </encoder>

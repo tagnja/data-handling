@@ -43,13 +43,10 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
     public String convertSql2ExcelV1(SqlQueryParam sqlQueryParam,
                                      String outputFileDir,
                                      String outputFileName) throws IOException {
-        long fetchStartTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         TableLabelAndData tableLabelAndData = getTableLabelsAndData(sqlQueryParam);
-        log.info("fetch data cost time: {} ms", System.currentTimeMillis() - fetchStartTime);
-        long writeExcelStartTime = System.currentTimeMillis();
         String outputPath = writeTableLabelAndDataToExcel(tableLabelAndData, outputFileDir, outputFileName);
-        log.info("write to excel cost time: {} ms", System.currentTimeMillis() - writeExcelStartTime);
-        log.info("Elapsed time is {} ms", System.currentTimeMillis() - fetchStartTime);
+        log.info("Elapsed time is {} ms", System.currentTimeMillis() - startTime);
         log.info("output file path: {}", outputPath);
         return outputPath;
     }
@@ -57,7 +54,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
     @Override
     public TableLabelAndData executeQuery(String sql) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            log.info("connection: {}", connection.toString());
+            log.debug("connection: {}", connection.toString());
             try (Statement statement = connection.createStatement()) {
                 try (ResultSet resultSet = statement.executeQuery(sql)) {
                     ResultSetMetaData metaData = resultSet.getMetaData();
@@ -71,10 +68,11 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
 
     @Override
     public TableLabelAndData getTableLabelsAndData(SqlQueryParam sqlQueryParam) {
+        long fetchStartTime = System.currentTimeMillis();
         String sql = sqlQueryParam.getSql();
-        log.info("sql is: {}", sql);
+        log.info("sqlQueryParam sql is: {}", sql);
         Long count = getCount(sqlQueryParam);
-        log.info("total: {} row(s)", count);
+        log.info("select count: {} row(s)", count);
         List<String> labels = getQueryLabels(sqlQueryParam);
         List<List<Object>> valuesList = new ArrayList<>();
         if (count > 0) {
@@ -88,6 +86,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         if (count != valuesList.size()) {
             throw new RuntimeException("获取数据与实际的行数错误");
         }
+        log.info("fetch data cost time: {} ms", System.currentTimeMillis() - fetchStartTime);
         return new TableLabelAndData(labels, valuesList);
     }
 
@@ -125,7 +124,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         int[] argTypes = sqlQueryParam.getArgTypes();
         Integer batchSize = sqlQueryParam.getBatchSize();
         String selectFirstRowSql = MysqlUtils.wrapperQueryWithOrderByAndLimit(sql, sqlQueryParam.getPrimaryKeyColumn(), 1L);
-        log.info("select first row sql: {}", selectFirstRowSql);
+        log.debug("select first row sql: {}", selectFirstRowSql);
         Map<String, Object> firstRow = jdbcTemplate.queryForMap(selectFirstRowSql, args, argTypes);
         log.debug("first row: {}", firstRow);
         Long firstRowId = Long.valueOf(firstRow.get(sqlQueryParam.getPrimaryKeyColumn()).toString());
@@ -144,7 +143,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
                     .toString();
             String batchSelectSql = MysqlUtils.wrapperPredicateToSql(sql, primaryKeyPredicate);
             batchSelectSql = MysqlUtils.wrapperQueryToSelectLimitSize(batchSelectSql, size);
-            log.info("batch select sql: {}", batchSelectSql);
+            log.debug("batch select sql: {}", batchSelectSql);
             SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(batchSelectSql, args, argTypes);
             SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
             int columnNum = metaData.getColumnCount();
@@ -161,7 +160,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
         String selectLabelSql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, 0L);
-        log.info("select label sql: {}", selectLabelSql);
+        log.debug("select label sql: {}", selectLabelSql);
         SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(selectLabelSql, args, argTypes);
         SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
         return getQueryLabelsByMetaData(metaData);
@@ -184,7 +183,8 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         List<List<Object>> valuesList = new ArrayList<>();
         int row = 0;
         while (resultSet.next()) {
-            System.out.println(++row);
+            row++;
+            log.debug("row is {}", row);
             List<Object> values = new ArrayList<>();
             for (int i = 0; i < columnNum; i++) {
                 Object value = resultSet.getObject(i + 1);
@@ -214,6 +214,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
 
     @Override
     public String writeTableLabelAndDataToExcel(TableLabelAndData tableLabelAndData, String outputFileDir, String outputFileName) throws IOException {
+        long writeExcelStartTime = System.currentTimeMillis();
         List<String> labels = tableLabelAndData.getLabels();
         List<List<Object>> valuesList = tableLabelAndData.getValuesList();
         String outputFilePath = new StringBuilder()
@@ -233,6 +234,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
                 workbook.write(outputStream);
             }
         }
+        log.info("write to excel cost time: {} ms", System.currentTimeMillis() - writeExcelStartTime);
         return outputFilePath;
     }
 
