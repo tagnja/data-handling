@@ -15,10 +15,12 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,10 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSource dataSource;
+
 
     @Override
     public String convertSql2ExcelV1(SqlQueryParam sqlQueryParam,
@@ -48,19 +54,40 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         return outputPath;
     }
 
-    private TableLabelAndData getTableLabelsAndData(SqlQueryParam sqlQueryParam) {
+    @Override
+    public TableLabelAndData executeQuery(String sql) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            log.info("connection: {}", connection.toString());
+            try (Statement statement = connection.createStatement()) {
+                try (ResultSet resultSet = statement.executeQuery(sql)) {
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+                    List<String> labels = getQueryLabelsByMetaData(metaData);
+                    List<List<Object>> resultData = getQueryResultData(resultSet, metaData.getColumnCount());
+                    return new TableLabelAndData(labels, resultData);
+                }
+            }
+        }
+    }
+
+    @Override
+    public TableLabelAndData getTableLabelsAndData(SqlQueryParam sqlQueryParam) {
         String sql = sqlQueryParam.getSql();
         log.info("sql is: {}", sql);
         Long count = getCount(sqlQueryParam);
         log.info("total: {} row(s)", count);
         List<String> labels = getQueryLabels(sqlQueryParam);
-        List<List<Object>> valuesList;
-        if (sqlQueryParam.getBatchFetch()) {
-            valuesList = getValueListBatch(sqlQueryParam, count);
-        } else {
-            valuesList = getValueList(sqlQueryParam);
+        List<List<Object>> valuesList = new ArrayList<>();
+        if (count > 0) {
+            if (sqlQueryParam.getBatchFetch()) {
+                valuesList = getValueListBatch(sqlQueryParam, count);
+            } else {
+                valuesList = getValueList(sqlQueryParam);
+            }
         }
         log.info("values list size: {}", valuesList.size());
+        if (count != valuesList.size()) {
+            throw new RuntimeException("获取数据与实际的行数错误");
+        }
         return new TableLabelAndData(labels, valuesList);
     }
 
@@ -86,6 +113,8 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
 
     /**
      * set startId to fetch a page of data
+     * Note: batch query sql must "order by id"
+     *
      * @param sqlQueryParam
      * @param count
      * @return
@@ -95,7 +124,7 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
         Integer batchSize = sqlQueryParam.getBatchSize();
-        String selectFirstRowSql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, 1L);
+        String selectFirstRowSql = MysqlUtils.wrapperQueryWithOrderByAndLimit(sql, sqlQueryParam.getPrimaryKeyColumn(), 1L);
         log.info("select first row sql: {}", selectFirstRowSql);
         Map<String, Object> firstRow = jdbcTemplate.queryForMap(selectFirstRowSql, args, argTypes);
         log.debug("first row: {}", firstRow);
@@ -110,7 +139,8 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
                     .append(sqlQueryParam.getPrimaryKeyColumn())
                     .append(" > ")
                     .append(startId)
-                    .append(" ")
+                    .append(" order by ")
+                    .append(sqlQueryParam.getPrimaryKeyColumn())
                     .toString();
             String batchSelectSql = MysqlUtils.wrapperPredicateToSql(sql, primaryKeyPredicate);
             batchSelectSql = MysqlUtils.wrapperQueryToSelectLimitSize(batchSelectSql, size);
@@ -150,6 +180,29 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         return valuesList;
     }
 
+    private List<List<Object>> getQueryResultData(ResultSet resultSet, int columnNum) throws SQLException {
+        List<List<Object>> valuesList = new ArrayList<>();
+        int row = 0;
+        while (resultSet.next()) {
+            System.out.println(++row);
+            List<Object> values = new ArrayList<>();
+            for (int i = 0; i < columnNum; i++) {
+                Object value = resultSet.getObject(i + 1);
+                values.add(value);
+            }
+            valuesList.add(values);
+        }
+        return valuesList;
+    }
+
+    private List<String> getQueryLabelsByMetaData(ResultSetMetaData resultSetMetaData) throws SQLException {
+        List<String> labels = new ArrayList<>();
+        int columnNum = resultSetMetaData.getColumnCount();
+        for (int i = 0; i < columnNum; i++) {
+            labels.add(resultSetMetaData.getColumnLabel(i + 1));
+        }
+        return labels;
+    }
     private List<String> getQueryLabelsByMetaData(SqlRowSetMetaData sqlRowSetMetaData) {
         List<String> labels = new ArrayList<>();
         int columnNum = sqlRowSetMetaData.getColumnCount();
@@ -159,7 +212,8 @@ public class Mysql2ExcelConverterImpl implements Mysql2ExcelConverter {
         return labels;
     }
 
-    private String writeTableLabelAndDataToExcel(TableLabelAndData tableLabelAndData, String outputFileDir, String outputFileName) throws IOException {
+    @Override
+    public String writeTableLabelAndDataToExcel(TableLabelAndData tableLabelAndData, String outputFileDir, String outputFileName) throws IOException {
         List<String> labels = tableLabelAndData.getLabels();
         List<List<Object>> valuesList = tableLabelAndData.getValuesList();
         String outputFilePath = new StringBuilder()

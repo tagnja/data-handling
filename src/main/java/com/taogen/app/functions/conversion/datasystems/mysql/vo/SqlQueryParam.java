@@ -23,5 +23,5 @@ public class SqlQueryParam {
     /**
      * TODO
      */
-    private Boolean currentFetch = false;
+    private Boolean concurrentFetch = false;
 }

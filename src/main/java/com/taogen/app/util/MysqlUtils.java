@@ -13,6 +13,19 @@ public class MysqlUtils {
                 .toString();
     }
 
+    public static String wrapperQueryWithOrderByAndLimit(String sql, String orderBy, Long limitSize) {
+        return new StringBuilder()
+                .append("SELECT * FROM (")
+                .append(sql)
+                .append(") as t")
+                .append(System.currentTimeMillis())
+                .append(" order by ")
+                .append(orderBy)
+                .append(" limit ")
+                .append(limitSize)
+                .toString();
+    }
+
     public static String wrapperQueryToSelectLimitSize(String sql, Long limitSize) {
         return new StringBuilder()
                 .append("SELECT * FROM (")
