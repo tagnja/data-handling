@@ -143,7 +143,7 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
                 .map(item -> item.get("tableName"))
                 .map(Objects::toString)
                 .collect(Collectors.toList());
-        log.info("table name list is {}", tableNameList);
+        log.info("table name list: \r\n{}", tableNameList.stream().collect(Collectors.joining("\r\n")));
         log.info("table name list size is {}", tableNameList.size());
         return tableNameList;
     }
