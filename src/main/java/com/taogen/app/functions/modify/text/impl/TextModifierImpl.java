@@ -26,7 +26,7 @@ public class TextModifierImpl implements TextModifier {
         String result = Arrays.stream(splitStrArray)
                 .map(itemModifyFunc)
                 .collect(Collectors.joining(joinDelimiter));
-        log.info("result is: {}", result);
+        log.debug("result is: {}", result);
         return result;
     }
 
@@ -65,5 +65,15 @@ public class TextModifierImpl implements TextModifier {
         }
         log.info("output file path: {}", outputFilePath);
         return outputFilePath;
+    }
+
+    @Override
+    public String updateDelimiter(String source, String delimiter, String newDelimiter) {
+        String[] splitStrArray = source.split(delimiter);
+        log.debug("split array: {}", Arrays.toString(splitStrArray));
+        String result = Arrays.stream(splitStrArray)
+                .collect(Collectors.joining(newDelimiter));
+        log.debug("result is: {}", result);
+        return result;
     }
 }

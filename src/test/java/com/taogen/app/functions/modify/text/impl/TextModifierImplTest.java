@@ -4,7 +4,6 @@ import com.taogen.app.functions.modify.text.TextModifier;
 import com.taogen.commons.io.FileUtils;
 import com.taogen.commons.io.IOUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -42,5 +41,14 @@ class TextModifierImplTest {
         // test
         String expect = "title like \"%Tom%\" or content like \"%Tom%\" or title like \"%Jack%\" or content like \"%Jack%\" or title like \"%John%\" or content like \"%John%\" or title like \"%Jackson%\" or content like \"%Jackson%\"";
         assertEquals(expect, handledText);
+    }
+
+    @Test
+    void updateDelimiter() {
+        String source = "Jack,Tom,John";
+        String delimiter = ",";
+        String newDelimiter = "-";
+        String result = textModifier.updateDelimiter(source, delimiter, newDelimiter);
+        assertEquals("Jack-Tom-John", result);
     }
 }

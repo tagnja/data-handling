@@ -30,4 +30,5 @@ public interface TextModifier {
                               String splitDelimiter, Function<String, String> itemModifyFunc,
                               String joinDelimiter) throws FileNotFoundException;
 
+    String updateDelimiter(String keywords, String delimiter, String newDelimiter);
 }
