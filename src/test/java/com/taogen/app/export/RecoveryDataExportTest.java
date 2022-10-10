@@ -6,24 +6,30 @@ import com.taogen.app.functions.conversion.datasystems.mysql.vo.SqlQueryParam;
 import com.taogen.app.functions.conversion.datasystems.mysql.vo.TableLabelAndData;
 import com.taogen.app.functions.modify.excel.ExcelModifier;
 import com.taogen.app.functions.modify.text.TextModifier;
+import com.taogen.commons.io.DirectoryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * @author Taogen
  */
 @Slf4j
+@Disabled
 public class RecoveryDataExportTest extends SpringBootBaseTest {
     @Autowired
     private ExcelModifier excelModifier;
@@ -36,6 +42,41 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Test
+    void splitModifyAndJoin_string_test1() {
+        String s = "AA|BB|CC";
+        String delimiter = "\\|";
+        Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
+        String handledText = textModifier.splitModifyAndJoin(s, delimiter, function, " or ");
+    }
+
+    @Test
+    @Disabled
+    void modifyRows_appendContainsSpecifiedWordToRows_test() throws IOException, URISyntaxException {
+        String keywords = "AA、BB、CC、DD";
+        String delimiter = "、";
+        String inputFilePath = DirectoryUtils.getUserHomeDir() + "\\Desktop\\test.xlsx";
+        int appendToColumn = 8;
+        // start to call modifyWorkbook
+        String[] names = keywords.split(delimiter);
+        DataFormatter formatter = new DataFormatter();
+        Consumer<Row> rowsModifyConsumer = row -> {
+            Cell titleCell = row.getCell(1);
+            String title = formatter.formatCellValue(titleCell);
+            System.out.println("title: " + title);
+            Cell contentCell = row.getCell(2);
+            String content = formatter.formatCellValue(contentCell);
+            System.out.println("content: " + content);
+            List<String> containsKeywords = Arrays.stream(names)
+                    .filter(item -> title.contains(item) || content.contains(item))
+                    .collect(Collectors.toList());
+            System.out.println("keywords: " + containsKeywords);
+            Cell cell = row.createCell(appendToColumn);
+            cell.setCellValue(String.join(delimiter, containsKeywords));
+        };
+        String outputFilePath = excelModifier.modifyRows(inputFilePath, rowsModifyConsumer);
+    }
 
     @Test
     void exportFromAllTableToSingleExcel() throws IOException {
@@ -70,7 +111,7 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
             }
         }
-        String outputDir = "C:\\Users\\Taogen\\Desktop\\export";
+        String outputDir = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
         String outputFileName = new StringBuilder()
                 .append("审核-数据-")
                 .append(System.currentTimeMillis())
@@ -113,7 +154,7 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
                 resultLabelAndData.setLabels(tableLabelsAndData.getLabels());
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
             }
-            String outputDir = "C:\\Users\\Taogen\\Desktop\\export";
+            String outputDir = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
             String outputFileName = new StringBuilder()
                     .append("审核-数据-")
                     .append(Objects.toString(groupName))
@@ -145,6 +186,7 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
                 .collect(Collectors.toList());
         log.info("table name list: \r\n{}", tableNameList.stream().collect(Collectors.joining("\r\n")));
         log.info("table name list size is {}", tableNameList.size());
+        assertEquals(20, tableNameList.size());
         return tableNameList;
     }
 

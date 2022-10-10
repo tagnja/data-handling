@@ -1,6 +1,5 @@
 package com.taogen.app.functions.modify.excel.impl;
 
-import com.taogen.app.SpringBootBaseTest;
 import com.taogen.app.functions.modify.excel.ExcelModifier;
 import com.taogen.app.util.ExcelUtils;
 import com.taogen.commons.io.FileUtils;
@@ -11,7 +10,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
