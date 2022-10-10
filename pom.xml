@@ -95,10 +95,15 @@
         </dependency>
 
         <!-- tools -->
+<!--        <dependency>-->
+<!--            <groupId>com.github.taogen-lib</groupId>-->
+<!--            <artifactId>commons-java</artifactId>-->
+<!--            <version>${taogen-commons-java.version}</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>com.github.taogen-lib</groupId>
-            <artifactId>commons-java</artifactId>
-            <version>${taogen-commons-java.version}</version>
+            <groupId>com.github.taogen-lib.taogen-commons</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>-SNAPSHOT</version>
         </dependency>
 
         <dependency>
