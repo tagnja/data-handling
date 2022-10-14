@@ -1,20 +1,18 @@
 package com.taogen.app.export;
 
-import com.taogen.app.SpringBootBaseTest;
-import com.taogen.app.functions.conversion.datasystems.mysql.service.Mysql2ExcelConverter;
 import com.taogen.app.functions.conversion.datasystems.mysql.vo.SqlQueryParam;
 import com.taogen.app.functions.conversion.datasystems.mysql.vo.TableLabelAndData;
-import com.taogen.app.functions.modify.excel.ExcelModifier;
-import com.taogen.app.functions.modify.text.TextModifier;
 import com.taogen.commons.io.DirectoryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -30,18 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @Slf4j
 @Disabled
-public class RecoveryDataExportTest extends SpringBootBaseTest {
-    @Autowired
-    private ExcelModifier excelModifier;
+public class RecoveryDataExportTest extends ExportBaseTest {
 
-    @Autowired
-    private TextModifier textModifier;
-
-    @Autowired
-    private Mysql2ExcelConverter mysql2ExcelConverter;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    @BeforeEach
+    void beforeEach() {
+        showConfig();
+    }
 
     @Test
     void splitModifyAndJoin_string_test1() {
@@ -76,6 +68,39 @@ public class RecoveryDataExportTest extends SpringBootBaseTest {
             cell.setCellValue(String.join(delimiter, containsKeywords));
         };
         String outputFilePath = excelModifier.modifyRows(inputFilePath, rowsModifyConsumer);
+    }
+
+    @Test
+    @Disabled
+    void findGroupNamesByCheckStatusEnable() {
+        String sql = "select id, name from recovery_group where check_status = 0";
+        log.debug("sql is {}", sql);
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+        log.info("group name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        log.info("total groups: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        log.info("group size is {}", result.size());
+        log.info("total group ids: {}", result.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
+        // result: 18,19,42,56,80,84,103,126,136,157,175,178,181,195,199,200,201,214,226,234,238,241,264,273,274,275,276,277,278,279,290
+    }
+
+    @Test
+    @Disabled
+    void findGroupNames() {
+        String keywords = "Apple、Orange";
+        String delimiter = "、";
+        String[] keywordArray = keywords.split(delimiter);
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (String groupName : keywordArray) {
+            log.info("group name: {}", groupName);
+            String sql = "select id, name from recovery_group where name like '%" + groupName + "%'";
+            log.debug("sql is {}", sql);
+            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+            resultList.addAll(result);
+            log.info("group name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        }
+        log.info("total groups: \n{}", resultList.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        log.info("group size is {}", resultList.size());
+        log.info("total group ids: {}", resultList.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
     }
 
     @Test

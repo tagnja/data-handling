@@ -24,6 +24,7 @@ public class TextModifierImpl implements TextModifier {
         String[] splitStrArray = source.split(splitDelimiter);
         log.debug("split array: {}", Arrays.toString(splitStrArray));
         String result = Arrays.stream(splitStrArray)
+                .map(String::trim)
                 .map(itemModifyFunc)
                 .collect(Collectors.joining(joinDelimiter));
         log.debug("result is: {}", result);
