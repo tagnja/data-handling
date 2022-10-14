@@ -31,7 +31,7 @@ public class RuoyiUserTest extends ExportBaseTest {
     }
 
     @Test
-    void addUserAccountsAndUserRoleAndDept() throws IOException {
+    void addUserAndUserRoleAndDeptToBubbleDanyangSys() throws IOException {
         try (
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(
                         DirectoryUtils.getUserHomeDir() + "/Desktop/test.xlsx"));
@@ -55,8 +55,8 @@ public class RuoyiUserTest extends ExportBaseTest {
                     System.out.println(name + "已存在！！");
                     continue;
                 }
-                log.debug(name);
-                log.debug(passwd);
+                // log.debug(name);
+                // log.debug(passwd);
                 String insertDeptSql = "insert into sys_dept " +
                         " (parent_id, ancestors, dept_name, order_num, leader, phone, email, create_by) " +
                         " value (100, '0,100', '${name}', 1, '${leader}', '${phone}', '', 'admin'); ";
@@ -83,8 +83,15 @@ public class RuoyiUserTest extends ExportBaseTest {
         }
     }
 
-    private boolean doesUserExist(String name) {
-        Map<String, Object> countMap = jdbcTemplate.queryForMap("select count(*) as count from sys_user where del_flag = '0' and user_name = '" + name + "'");
+    private void updateUserPassword(String username, String passwd) {
+        passwd = encryptPassword(passwd);
+        int update = jdbcTemplate.update("update sys_user set password = '" + passwd + "' where user_name = '" + username + "'");
+        System.out.println(update);
+    }
+
+    private boolean doesUserExist(String username) {
+        Map<String, Object> countMap = jdbcTemplate.queryForMap("select count(*) as count from sys_user " +
+                "where del_flag = '0' and user_name = '" + username + "'");
         Integer count = Integer.parseInt(countMap.get("count").toString());
         return count > 0;
     }
