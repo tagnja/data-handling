@@ -1,5 +1,6 @@
 package com.taogen.app.util;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -9,6 +10,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -29,6 +31,16 @@ public class ExcelUtils {
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    public static Workbook createWorkbookByFileSuffix(InputStream in, String fileSuffix) throws IOException {
+        if (".xls".equals(fileSuffix)) {
+            return new HSSFWorkbook(in);
+        }
+        if (".xlsx".equals(fileSuffix)) {
+            return new XSSFWorkbook(in);
+        }
+        return null;
+    }
 
     public static boolean predicateExcel(String excelFilePath, Predicate<XSSFWorkbook> excelPredicate) {
         try (
