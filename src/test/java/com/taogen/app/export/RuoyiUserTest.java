@@ -1,12 +1,13 @@
 package com.taogen.app.export;
 
+import com.taogen.app.util.ExcelUtils;
 import com.taogen.commons.datatypes.string.StringUtils;
 import com.taogen.commons.io.DirectoryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -35,38 +36,53 @@ public class RuoyiUserTest extends ExportBaseTest {
     }
 
     @Test
+    @Disabled
     void addUserAndUserRoleAndDeptToBubbleDanyangSys() throws IOException {
+        String filePath = DirectoryUtils.getUserHomeDir() +
+                "/Desktop/test.xlsx";
+        String fileSuffix = filePath.substring(filePath.lastIndexOf("."));
         try (
-                BufferedInputStream in = new BufferedInputStream(new FileInputStream(
-                        DirectoryUtils.getUserHomeDir() + "/Desktop/test.xlsx"));
-                XSSFWorkbook workbook = new XSSFWorkbook(in);
+                BufferedInputStream in = new BufferedInputStream(new FileInputStream(filePath));
+                Workbook workbook = ExcelUtils.createWorkbookByFileSuffix(in, fileSuffix)
         ) {
+            boolean executeSql = false;
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = sheet.iterator();
             iterator.next();
             Row row;
             List<String> sqlList = new ArrayList<>();
+            int totalUserNum = 0, existedUserNum = 0;
             while (iterator.hasNext()) {
                 row = iterator.next();
                 DataFormatter formatter = new DataFormatter();
-                String name = formatter.formatCellValue(row.getCell(5)).trim();
-                String passwd = formatter.formatCellValue(row.getCell(6)).trim();
+                String name = formatter.formatCellValue(row.getCell(1)).trim();
+                if (StringUtils.isEmpty(name)) {
+                    break;
+                }
+                String passwd = formatter.formatCellValue(row.getCell(2)).trim();
                 String leader = formatter.formatCellValue(row.getCell(3)).trim();
                 String phone = formatter.formatCellValue(row.getCell(4)).trim();
+                log.debug("name: {}, passwd: {}, leader: {}, phone: {}", name, passwd, leader, phone);
                 if (StringUtils.isNotEmpty(phone) && phone.indexOf("、") > 0) {
                     phone = phone.substring(0, phone.indexOf("、"));
                 }
                 log.debug("name is {}", name);
                 if (doesUserExist(name)) {
+                    if (executeSql) {
+                        updateUserPassword(name, passwd);
+                    }
                     log.info("{} already exists!", name);
+                    existedUserNum++;
                     continue;
                 }
                 sqlList.addAll(getExecSqlList(name, passwd, phone, leader));
+                totalUserNum++;
             }
+            log.info("total user num: {}", totalUserNum);
+            log.info("existed user num: {}", existedUserNum);
             log.info("sql list size is {}", sqlList.size());
             log.info("sql list is \n{}", sqlList.stream().collect(Collectors.joining("\r\n")));
-            boolean execute = false;
-            if (execute) {
+            if (executeSql) {
                 execSqlList(sqlList);
             }
         }
@@ -113,7 +129,7 @@ public class RuoyiUserTest extends ExportBaseTest {
     private void updateUserPassword(String username, String passwd) {
         passwd = encryptPassword(passwd);
         int update = jdbcTemplate.update("update sys_user set password = '" + passwd + "' where user_name = '" + username + "'");
-        System.out.println(update);
+        log.info("update {} user passwords", update);
     }
 
     private boolean doesUserExist(String username) {
