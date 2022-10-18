@@ -38,14 +38,17 @@ public class RuoyiUserTest extends ExportBaseTest {
     @Test
     @Disabled
     void addUserAndUserRoleAndDeptToBubbleDanyangSys() throws IOException {
+        // parameter begin
+        boolean executeSql = false;
         String filePath = DirectoryUtils.getUserHomeDir() +
                 "/Desktop/test.xlsx";
+        int nameColNum = 1, passwdColNum = 2, leaderColNum = 3, phoneColNum = 4;
+        // parameter end
         String fileSuffix = filePath.substring(filePath.lastIndexOf("."));
         try (
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(filePath));
                 Workbook workbook = ExcelUtils.createWorkbookByFileSuffix(in, fileSuffix)
         ) {
-            boolean executeSql = false;
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> iterator = sheet.iterator();
             iterator.next();
@@ -55,18 +58,17 @@ public class RuoyiUserTest extends ExportBaseTest {
             while (iterator.hasNext()) {
                 row = iterator.next();
                 DataFormatter formatter = new DataFormatter();
-                String name = formatter.formatCellValue(row.getCell(1)).trim();
+                String name = formatter.formatCellValue(row.getCell(nameColNum)).trim();
                 if (StringUtils.isEmpty(name)) {
                     break;
                 }
-                String passwd = formatter.formatCellValue(row.getCell(2)).trim();
-                String leader = formatter.formatCellValue(row.getCell(3)).trim();
-                String phone = formatter.formatCellValue(row.getCell(4)).trim();
+                String passwd = formatter.formatCellValue(row.getCell(passwdColNum)).trim();
+                String leader = formatter.formatCellValue(row.getCell(leaderColNum)).trim();
+                String phone = formatter.formatCellValue(row.getCell(phoneColNum)).trim();
                 log.debug("name: {}, passwd: {}, leader: {}, phone: {}", name, passwd, leader, phone);
                 if (StringUtils.isNotEmpty(phone) && phone.indexOf("、") > 0) {
                     phone = phone.substring(0, phone.indexOf("、"));
                 }
-                log.debug("name is {}", name);
                 if (doesUserExist(name)) {
                     if (executeSql) {
                         updateUserPassword(name, passwd);
@@ -80,8 +82,8 @@ public class RuoyiUserTest extends ExportBaseTest {
             }
             log.info("total user num: {}", totalUserNum);
             log.info("existed user num: {}", existedUserNum);
-            log.info("sql list size is {}", sqlList.size());
-            log.info("sql list is \n{}", sqlList.stream().collect(Collectors.joining("\r\n")));
+            log.info("generated sql list size is {}", sqlList.size());
+            log.info("generated sql list printed below \n{}", sqlList.stream().collect(Collectors.joining("\r\n")));
             if (executeSql) {
                 execSqlList(sqlList);
             }
@@ -91,7 +93,7 @@ public class RuoyiUserTest extends ExportBaseTest {
     @Transactional(rollbackFor = Exception.class)
     void execSqlList(List<String> sqlList) {
         for (String sql : sqlList) {
-            log.debug("sql is {}", sql);
+            log.debug("executed sql is {}", sql);
             jdbcTemplate.execute(sql);
         }
     }
@@ -128,7 +130,9 @@ public class RuoyiUserTest extends ExportBaseTest {
 
     private void updateUserPassword(String username, String passwd) {
         passwd = encryptPassword(passwd);
-        int update = jdbcTemplate.update("update sys_user set password = '" + passwd + "' where user_name = '" + username + "'");
+        String sql = "update sys_user set password = '" + passwd + "' where user_name = '" + username + "'";
+        int update = jdbcTemplate.update(sql);
+        log.debug("executed sql is {}", sql);
         log.info("update {} user passwords", update);
     }
 
