@@ -19,7 +19,7 @@
     <url>http://www.example.com</url>
 
     <properties>
-        <taogen-commons.version>4c638fd961</taogen-commons.version>
+        <taogen-commons.version>9526dfee57</taogen-commons.version>
     </properties>
 
     <dependencies>
