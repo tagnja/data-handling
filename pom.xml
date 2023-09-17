@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.github.taogen-lib</groupId>
         <artifactId>spring-boot-parent</artifactId>
-        <version>main-SNAPSHOT</version>
+        <version>bb42d827c2</version>
         <!--        <version>3e93c4bbdd</version>-->
     </parent>
     <groupId>com.taogen.app</groupId>
@@ -19,7 +19,7 @@
     <url>http://www.example.com</url>
 
     <properties>
-        <taogen-commons-java.version>66c8f792db</taogen-commons-java.version>
+        <taogen-commons.version>4c638fd961</taogen-commons.version>
     </properties>
 
     <dependencies>
@@ -118,7 +118,7 @@
         <dependency>
             <groupId>com.github.taogen-lib.taogen-commons</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>-SNAPSHOT</version>
+            <version>${taogen-commons.version}</version>
         </dependency>
 
         <dependency>
