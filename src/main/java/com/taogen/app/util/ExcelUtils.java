@@ -1,10 +1,10 @@
 package com.taogen.app.util;
 
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,5 +111,21 @@ public class ExcelUtils {
     public static short getDateTimeFormat(Workbook workbook, String format) {
         CreationHelper createHelper = workbook.getCreationHelper();
         return createHelper.createDataFormat().getFormat(format);
+    }
+
+    public static Hyperlink createHyperLinkByUrl(Workbook workbook, String url) {
+        CreationHelper createHelper = workbook.getCreationHelper();
+        XSSFHyperlink hyperlink = (XSSFHyperlink) createHelper.createHyperlink(HyperlinkType.URL);
+        hyperlink.setAddress(url);
+        return hyperlink;
+    }
+
+    public static CellStyle createLinkCellStyle(XSSFWorkbook workbook) {
+        XSSFCellStyle cellStyle = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setUnderline(FontUnderline.SINGLE);
+        font.setColor(IndexedColors.BLUE.getIndex());
+        cellStyle.setFont(font);
+        return cellStyle;
     }
 }

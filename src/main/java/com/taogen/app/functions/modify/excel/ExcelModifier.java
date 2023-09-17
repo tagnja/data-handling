@@ -18,7 +18,9 @@ public interface ExcelModifier {
      * @return Modified file path
      * @throws FileNotFoundException
      */
-    String modifyRows(String inputFilePath, Consumer<Row> rowsModifyConsumer) throws IOException;
+    String modifyRows(String inputFilePath,
+                      int startRow,
+                      Consumer<Row> rowsModifyConsumer) throws IOException;
 
     /**
      * Note: for large row files, removing rows is very slow. It's better to remove it before write to Excel.

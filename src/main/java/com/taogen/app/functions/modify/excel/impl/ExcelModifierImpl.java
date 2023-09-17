@@ -7,6 +7,7 @@ import com.taogen.commons.io.FileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 public class ExcelModifierImpl implements ExcelModifier {
     @Override
     public String modifyRows(String inputFilePath,
+                             int startRowNum,
                              Consumer<Row> rowsModifyConsumer) throws IOException {
         DirectoryUtils.ensureFileDirExist(inputFilePath);
         String sourceDir = DirectoryUtils.getDirPathByFile(new File(inputFilePath));
@@ -39,13 +41,17 @@ public class ExcelModifierImpl implements ExcelModifier {
         Files.copy(Paths.get(inputFilePath), Paths.get(outputFilePath.toString()));
         // start to modify excel
         BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(outputFilePath.toString()));
-        XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+        Workbook workbook = ExcelUtils.createWorkbookByFileSuffix(inputStream, "." + FileUtils.getFileExtension(inputFilePath));
         Sheet sheet = workbook.getSheetAt(0);
         Iterator<Row> iterator = sheet.iterator();
         Row row;
+        int rowNum = 0;
         while (iterator.hasNext()) {
             row = iterator.next();
-            rowsModifyConsumer.accept(row);
+            if (rowNum >= startRowNum) {
+                rowsModifyConsumer.accept(row);
+            }
+            rowNum++;
         }
         inputStream.close();
         BufferedOutputStream outputStream = new BufferedOutputStream(
