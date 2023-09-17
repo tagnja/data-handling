@@ -64,20 +64,25 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
                 "from app_wzjc.recovery_data rd \n" +
                 "left join recovery_group rg on rg.id = rd.group_id \n" +
                 "left join recovery_site rs on rs.id = rd.site_id\n" +
-                "where words_audited_xf=1 order by rd.id desc limit 100";
+                "where group_id = 314 and words_audited_xf=1 order by rd.pubtime desc ";
+//                + "limit 100";
 //                "where remark is not null order by rd.id desc limit 100";
         SqlQueryParam sqlQueryParam = new SqlQueryParam();
         sqlQueryParam.setSql(sql);
         sqlQueryParam.setBatchFetch(false);
         TableLabelAndData tableLabelsAndData = mysql2ExcelConverter.getTableLabelsAndData(sqlQueryParam);
-        String outputDir = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+        String outputDirPath = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+        File outputDir = new File(outputDirPath);
+        if (!outputDir.exists() || !outputDir.isDirectory()) {
+            outputDir.mkdirs();
+        }
         String outputFileName = new StringBuilder()
                 .append("审核-数据-")
                 .append(System.currentTimeMillis())
                 .append(".xlsx")
                 .toString();
         String outputFilePath = new StringBuilder()
-                .append(outputDir)
+                .append(outputDirPath)
                 .append(File.separator)
                 .append(outputFileName)
                 .toString();
@@ -89,7 +94,8 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
             int rowNum = 0;
             List<String> labels = tableLabelsAndData.getLabels();
             labels.addAll(Arrays.asList("错误词", "修改建议", "错误类型", "二级错误类型", "三级错误类型"));
-            writeTitle(sheet, rowNum, labels, titleCellStyle);
+            XSSFRow titleRow = writeTitle(sheet, rowNum, labels, titleCellStyle);
+            titleRow.setHeight((short) (20 * 20));
             rowNum++;
             writeData(sheet, rowNum, tableLabelsAndData.getValuesList());
             try (BufferedOutputStream outputStream = new BufferedOutputStream(
@@ -212,7 +218,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
         return cellStyle;
     }
 
-    private void writeTitle(XSSFSheet sheet, int rowNum, List<String> labels, XSSFCellStyle titleCellStyle) {
+    private XSSFRow writeTitle(XSSFSheet sheet, int rowNum, List<String> labels, XSSFCellStyle titleCellStyle) {
         XSSFRow row = sheet.createRow(rowNum);
         int colNum = 0;
         for (; colNum < labels.size(); colNum++) {
@@ -220,6 +226,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
             cell.setCellStyle(titleCellStyle);
             ExcelUtils.setCellValueByObject(cell, labels.get(colNum));
         }
+        return row;
     }
 
     @Data
@@ -249,7 +256,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
                 }
             }
         };
-        String outputFilePath = excelModifier.modifyRows("C:\\Users\\Taogen\\Desktop\\export\\审核-数据-1666339953293.xlsx", rowsModifyConsumer);
+        String outputFilePath = excelModifier.modifyRows("C:\\Users\\Taogen\\Desktop\\export\\审核-数据-1666339953293.xlsx", 0, rowsModifyConsumer);
         log.info(outputFilePath);
     }
 

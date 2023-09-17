@@ -52,7 +52,7 @@ class ExcelModifierImplTest {
             Cell cell = row.createCell(appendToColumn);
             cell.setCellValue(String.join(delimiter, containsKeywords));
         };
-        String outputFilePath = excelModifier.modifyRows(inputFilePath, rowsModifyConsumer);
+        String outputFilePath = excelModifier.modifyRows(inputFilePath, 0, rowsModifyConsumer);
         // test output file
         Predicate<XSSFWorkbook> excelPredicate = workbook -> {
             XSSFSheet sheet = workbook.getSheetAt(0);
