@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,8 +42,7 @@ public class RuoyiUserTest extends ExportBaseTest {
     void addUserAndUserRoleAndDeptToBubbleDanyangSys() throws IOException {
         // parameter begin
         boolean executeSql = false;
-        String filePath = DirectoryUtils.getUserHomeDir() +
-                "/Desktop/test.xlsx";
+        String filePath = DirectoryUtils.getUserHomeDir() + File.separator + "export" + File.separator + "test.xlsx";
         int nameColNum = 1, passwdColNum = 2, leaderColNum = 3, phoneColNum = 4;
         // parameter end
         String fileSuffix = filePath.substring(filePath.lastIndexOf("."));

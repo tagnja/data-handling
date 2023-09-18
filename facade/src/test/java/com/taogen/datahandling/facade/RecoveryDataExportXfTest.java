@@ -72,7 +72,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
         sqlQueryParam.setSql(sql);
         sqlQueryParam.setBatchFetch(false);
         LabelAndData tableLabelsAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
-        String outputDirPath = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+        String outputDirPath = DirectoryUtils.getUserHomeDir() + File.separator + "export";
         File outputDir = new File(outputDirPath);
         if (!outputDir.exists() || !outputDir.isDirectory()) {
             outputDir.mkdirs();
@@ -111,7 +111,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
     @Test
     @Disabled
     void removeRows() throws IOException {
-        String outputDir = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+        String outputDir = DirectoryUtils.getUserHomeDir() + File.separator + "export";
         String outputFileName = "审核-数据-1666576500831.xlsx";
         String inputFilePath = new StringBuilder()
                 .append(outputDir)

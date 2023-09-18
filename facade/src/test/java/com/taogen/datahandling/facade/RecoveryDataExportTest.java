@@ -45,7 +45,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
     void modifyRows_appendContainsSpecifiedWordToRows_test() throws IOException, URISyntaxException {
         String keywords = "AA、BB、CC、DD";
         String delimiter = "、";
-        String inputFilePath = DirectoryUtils.getUserHomeDir() + "\\Desktop\\test.xlsx";
+        String inputFilePath = DirectoryUtils.getUserHomeDir() + File.separator + "export" + File.separator + "test.xlsx";
         int appendToColumn = 8;
         // start to call modifyWorkbook
         String[] names = keywords.split(delimiter);
@@ -178,7 +178,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
             }
         }
-        String outputDir = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+        String outputDir = DirectoryUtils.getUserHomeDir() + File.separator + "export";
         String outputFileName = new StringBuilder()
                 .append("审核-数据-")
                 .append(System.currentTimeMillis())
@@ -251,7 +251,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
             if (resultLabelAndData.getValuesList().isEmpty()) {
                 continue;
             }
-            String outputDirPath = DirectoryUtils.getUserHomeDir() + "\\Desktop\\export";
+            String outputDirPath = DirectoryUtils.getUserHomeDir() + File.separator + "export";
             File dir = new File(outputDirPath);
             if (!dir.exists() || !dir.isDirectory()) {
                 dir.mkdirs();
