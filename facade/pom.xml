@@ -1,0 +1,81 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.taogen.datahandling</groupId>
+        <artifactId>data-handler</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.taogen.datahandling</groupId>
+    <artifactId>facade</artifactId>
+    <packaging>jar</packaging>
+
+    <name>facade</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+    </properties>
+
+    <dependencies>
+        <!-- basic -->
+        <dependency>
+            <groupId>com.taogen.datahandling</groupId>
+            <artifactId>data-elasticsearch</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.taogen.datahandling</groupId>
+            <artifactId>data-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.taogen.datahandling</groupId>
+            <artifactId>data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.taogen.datahandling</groupId>
+            <artifactId>data-office</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.taogen.datahandling</groupId>
+            <artifactId>data-text</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>android-json</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- org json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+        </dependency>
+
+    </dependencies>
+</project>
