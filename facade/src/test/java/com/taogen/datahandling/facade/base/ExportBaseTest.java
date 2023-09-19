@@ -2,8 +2,8 @@ package com.taogen.datahandling.facade.base;
 
 import com.taogen.datahandling.facade.service.Sql2ExcelConverter;
 import com.taogen.datahandling.mysql.service.MySQLReader;
-import com.taogen.datahandling.office.service.ExcelModifier;
-import com.taogen.datahandling.office.service.ExcelWriter;
+import com.taogen.datahandling.office.excel.service.service.ExcelModifier;
+import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import com.taogen.datahandling.text.service.TextModifier;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;

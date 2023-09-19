@@ -4,7 +4,7 @@ import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.service.Sql2ExcelConverter;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
-import com.taogen.datahandling.office.service.ExcelWriter;
+import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
