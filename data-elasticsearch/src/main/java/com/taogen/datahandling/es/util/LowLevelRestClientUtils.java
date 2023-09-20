@@ -31,6 +31,7 @@ public class LowLevelRestClientUtils {
                                                List<String> index,
                                                String dsl) throws IOException {
         List<JSONObject> result = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
         int searchTimes = 0;
         String endpoint = "/" + String.join(",", index) + "/_search?scroll=1m";
         JSONObject esResult = search(restClient, endpoint, dsl);
@@ -42,7 +43,9 @@ public class LowLevelRestClientUtils {
         while (hits != null && hits.length() > 0) {
             addHitsToList(result, hits);
             esResult = scrollSearch(restClient, scrollId);
-            log.debug("scroll {} - {}/{}, {}", searchTimes, result.size(), total, result.size() * 100 / total + "%");
+            long elapsedTime = (System.currentTimeMillis() - startTime);
+            long remainingTime = (elapsedTime / result.size() * (total - result.size()));
+            log.debug("scroll {} - {}/{}, {}, elapsed {}s, left {}s", searchTimes, result.size(), total, result.size() * 100 / total + "%", elapsedTime / 1000, remainingTime / 1000);
             searchTimes++;
             scrollId = esResult.getString("_scroll_id");
             hits = esResult.getJSONObject("hits").getJSONArray("hits");
