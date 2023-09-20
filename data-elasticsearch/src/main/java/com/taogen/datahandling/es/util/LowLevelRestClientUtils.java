@@ -31,20 +31,24 @@ public class LowLevelRestClientUtils {
                                                List<String> index,
                                                String dsl) throws IOException {
         List<JSONObject> result = new ArrayList<>();
+        int searchTimes = 0;
         String endpoint = "/" + String.join(",", index) + "/_search?scroll=1m";
         JSONObject esResult = search(restClient, endpoint, dsl);
+        searchTimes++;
         String scrollId = esResult.getString("_scroll_id");
         log.debug("scrollId: {}", scrollId);
         JSONArray hits = esResult.getJSONObject("hits").getJSONArray("hits");
         while (hits != null && hits.length() > 0) {
             addHitsToList(result, hits);
             esResult = scrollSearch(restClient, scrollId);
+            log.debug("scroll...");
+            searchTimes++;
             scrollId = esResult.getString("_scroll_id");
-            log.debug("scrollId: {}", scrollId);
             hits = esResult.getJSONObject("hits").getJSONArray("hits");
         }
+        log.debug("search times: {}", searchTimes);
+        log.debug("result size: {}", result.size());
         return result;
-
     }
 
     private static void addHitsToList(List<JSONObject> result, JSONArray hits) {
@@ -66,6 +70,7 @@ public class LowLevelRestClientUtils {
 
     private static JSONObject search(RestClient restClient, String endpoint, String dsl) throws IOException {
         Request request = new Request("GET", endpoint);
+        log.debug("endpoint: {}", endpoint);
         request.setJsonEntity(dsl);
         log.debug("dsl: {}", dsl);
         Response response = restClient.performRequest(request);

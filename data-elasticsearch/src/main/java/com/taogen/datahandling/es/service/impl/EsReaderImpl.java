@@ -43,7 +43,6 @@ public class EsReaderImpl implements EsReader {
             }
             valuesList.add(values);
         });
-        log.debug("valuesList size: {}", valuesList.size());
         labelAndData.setValuesList(valuesList);
         return labelAndData;
     }

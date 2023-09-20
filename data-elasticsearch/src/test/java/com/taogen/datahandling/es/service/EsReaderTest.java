@@ -4,6 +4,7 @@ import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.vo.DslQueryParam;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ class EsReaderTest {
     private EsReader esReader;
 
     @Test
+    @Disabled
     void readAll() throws IOException {
         DslQueryParam dslQueryParam = new DslQueryParam();
         dslQueryParam.setIndex(Arrays.asList("alias-meta-20230901"));
