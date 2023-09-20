@@ -20,7 +20,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.taogen.app" level="debug">
+    <logger name="com.taogen" level="debug">
         <appender-ref ref="FILE" />
     </logger>
 
