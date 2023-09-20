@@ -1,0 +1,7 @@
+es:
+  host: ${ES_SYTC_DX_HOST}
+  port: ${ES_SYTC_DX_PORT}
+  username: ${ES_SYTC_DX_USERNAME}
+  password: ${ES_SYTC_DX_PASSWORD}
+  connect-timeout: 10000
+  socket-timeout: 60000
