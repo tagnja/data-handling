@@ -1,10 +1,11 @@
 package com.taogen.datahandling.es.service;
 
-import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.vo.DslQueryParam;
 import org.elasticsearch.client.RestClient;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author taogen
@@ -22,5 +23,5 @@ public interface EsReader {
      * @return
      * @throws IOException
      */
-    LabelAndData readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException;
+    List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException;
 }

@@ -1,9 +1,9 @@
 package com.taogen.datahandling.es.service;
 
-import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.vo.DslQueryParam;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +13,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -48,7 +49,7 @@ class EsReaderTest {
                 "        }\n" +
                 "    }\n" +
                 "}");
-        LabelAndData labelAndData = esReader.readAll(restClient, dslQueryParam);
+        List<JSONObject> labelAndData = esReader.readAll(restClient, dslQueryParam);
         log.debug("labelAndData: {}", labelAndData);
     }
 }

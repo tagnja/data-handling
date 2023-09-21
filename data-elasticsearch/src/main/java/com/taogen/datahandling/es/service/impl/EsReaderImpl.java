@@ -21,13 +21,12 @@ import java.util.List;
 @Slf4j
 public class EsReaderImpl implements EsReader {
     @Override
-    public LabelAndData readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException {
+    public List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException {
         long startTime = System.currentTimeMillis();
         List<JSONObject> itemJsonList = LowLevelRestClientUtils.scrollQuery(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl());
-        LabelAndData labelAndData = convertToLabelAndData(itemJsonList, dslQueryParam);
         long endTime = System.currentTimeMillis();
         log.debug("readAll cost {} ms", endTime - startTime);
-        return labelAndData;
+        return itemJsonList;
     }
 
     private LabelAndData convertToLabelAndData(List<JSONObject> itemJsonList, DslQueryParam dslQueryParam) {
