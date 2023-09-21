@@ -147,6 +147,7 @@ public class YuqingDataExportTest {
         if (queryFields.contains(HOST_NAME)) {
             List<String> hosts = jsonObjectList.stream().filter(item -> item.has("host")).map(item -> item.getString("host"))
                     .distinct().collect(Collectors.toList());
+            log.debug("host size: {}", hosts.size());
             String placeholder = String.join(", ", Collections.nCopies(hosts.size(), "?"));
             List<Map<String, Object>> mapList = jdbcTemplate.queryForList("select host, name from dict_site_info where host in (" + placeholder + ")", hosts.toArray());
             Map<String, String> hostNameMap = mapList.stream().collect(Collectors.toMap(item -> (String) item.get("host"), item -> (String) item.get("name")));
