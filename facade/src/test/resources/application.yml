@@ -4,9 +4,20 @@ spring:
     #    url: jdbc:mysql://localhost:3306/my_test?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
     #    username: root
     #    password: root
-    url: ${MYSQL_SYTC_PROD_1_APP_WZJC_URL}
-    username: ${MYSQL_SYTC_PROD_1_USERNAME}
-    password: ${MYSQL_SYTC_PROD_1_PASSWORD}
+    #    url: ${MYSQL_SYTC_PROD_1_APP_WZJC_URL}
+    #    username: ${MYSQL_SYTC_PROD_1_USERNAME}
+    #    password: ${MYSQL_SYTC_PROD_1_PASSWORD}
+    # query ES host name
+    url: ${MYSQL_SYTC_PROD_2_DICT_URL}
+    username: ${MYSQL_SYTC_PROD_2_USERNAME}
+    password: ${MYSQL_SYTC_PROD_2_PASSWORD}
+es:
+  host: ${ES_SYTC_DX_HOST}
+  port: ${ES_SYTC_DX_PORT}
+  username: ${ES_SYTC_DX_USERNAME}
+  password: ${ES_SYTC_DX_PASSWORD}
+  connect-timeout: 10000
+  socket-timeout: 60000
 #mybatis-plus:
 #  mapper-locations: classpath:mapper/*.xml
 #  type-aliases-package: com.taogen.demo.mybatisplus.entity
