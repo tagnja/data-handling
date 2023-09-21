@@ -44,6 +44,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- java.lang.ClassNotFoundException: org.springframework.web.reactive.function.client.WebClient -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
@@ -70,6 +71,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- java.lang.ClassNotFoundException: jakarta.json.JsonException -->
         <dependency>
             <groupId>jakarta.json</groupId>
             <artifactId>jakarta.json-api</artifactId>

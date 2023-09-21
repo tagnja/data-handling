@@ -63,6 +63,7 @@ public class ExcelWriterImpl implements ExcelWriter {
 
     private void writeData(XSSFSheet sheet, int rowNum, List<List<Object>> valuesList) {
         for (int i = 0; i < valuesList.size(); i++) {
+            log.debug("write row: {}/{}", i + 1, valuesList.size());
             XSSFRow row = sheet.createRow(rowNum++);
             List<Object> values = valuesList.get(i);
             for (int colNum = 0; colNum < values.size(); colNum++) {
