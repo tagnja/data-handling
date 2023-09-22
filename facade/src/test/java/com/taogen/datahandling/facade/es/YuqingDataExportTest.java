@@ -10,6 +10,10 @@ import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -29,8 +33,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.taogen.datahandling.facade.es.EsField.*;
+import static com.taogen.datahandling.facade.es.EsFieldInfo.*;
 
 /**
  * @author taogen
@@ -39,7 +44,7 @@ import static com.taogen.datahandling.facade.es.EsField.*;
 @SpringBootTest
 @Slf4j
 @Disabled
-public class YuqingDataExportTest {
+class YuqingDataExportTest {
     @Autowired(required = true)
     private EsReader esReader;
     @Autowired(required = true)
@@ -52,32 +57,106 @@ public class YuqingDataExportTest {
     private ExcelWriter excelWriter;
 
     @Test
-    public void exportDataToExcel() throws IOException, ParseException {
+    void test() {
+//        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME, IP_REGION, SOURCE_NAME, CHECK_IN_AREA, LEVEL_NAME);
+//        String dsl = "{\n" +
+//                "    \"query\": {\n" +
+//                "        \"bool\": {\n" +
+//                "            \"must\": {\n" +
+//                "              \"range\": {\"pub_time\": {\"gte\": \"2023-09-01 00:10:00\",\"lte\": \"2023-09-01 00:11:00\"}}\n" +
+//                "          }\n" +
+//                "        }\n" +
+//                "    }\n" +
+//                "}";
+//        JSONObject jsonObject = new JSONObject(dsl);
+//        jsonObject.put("size", 50);
+//        jsonObject.put("sort", Collections.singletonList(Collections.singletonMap(
+//                "pub_time", Collections.singletonMap("order", "desc"))));
+//        List<String> fetchFields = queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList());
+//        jsonObject.put("_source", fetchFields);
+//        dsl = jsonObject.toString();
+//        log.debug("dsl: {}", dsl);
+
+        List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
+        String keywordExpression = "";
+        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
+                {DEP, new Object[]{"1", "2"}},
+                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
+                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
+                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
+                {HOST_NAME, new Object[]{"baidu.com"}},
+                {AUTHOR, new Object[]{"zhangsan"}},
+        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
+
+        String dsl = buildDslStr(queryFields, queryConditions, keywordExpression, 50);
+
+    }
+
+    private String buildDslStr(List<EsFieldInfo> queryFields,
+                               Map<EsFieldInfo, Object[]> queryConditions,
+                               String keywordExpression,
+                               int size) {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.size(size);
+        searchSourceBuilder.sort("pub_time", SortOrder.DESC);
+        List<String> fetchFields = queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList());
+        searchSourceBuilder.fetchSource(fetchFields.toArray(new String[0]), null);
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        // 非垃圾数据（默认条件，和舆情搜索保持一致）
+        boolQueryBuilder.must(QueryBuilders.termQuery(EsField.STATUS, "0"));
+        BoolQueryBuilder keywordBoolQuery = KeywordBuilder.getBoolQueryBuilderByExpression(keywordExpression);
+        if (keywordBoolQuery != null) {
+            boolQueryBuilder.must(keywordBoolQuery);
+        }
+        for (Map.Entry<EsFieldInfo, Object[]> entry : queryConditions.entrySet()) {
+            EsFieldInfo esFieldInfo = entry.getKey();
+            Object[] values = entry.getValue();
+            boolQueryBuilder.must(esFieldInfo.getQueryFunction().apply(values));
+        }
+        searchSourceBuilder.query(boolQueryBuilder);
+        log.debug("searchSourceBuilder: {}", searchSourceBuilder);
+        return searchSourceBuilder.toString();
+    }
+
+    @Test
+    void exportDataToExcel() throws IOException, ParseException {
+//        String startDate = "2023-09-01";
+//        String endDate = "2023-09-01";
+//        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME, IP_REGION, SOURCE_NAME, CHECK_IN_AREA, LEVEL_NAME);
+////        List<EsField> queryFields = Arrays.asList(ID, PUB_TIME);
+//        String dsl = "{\n" +
+//                "    \"query\": {\n" +
+//                "        \"bool\": {\n" +
+//                "            \"must\": {\n" +
+//                "              \"range\": {\"pub_time\": {\"gte\": \"2023-09-01 00:10:00\",\"lte\": \"2023-09-01 00:11:00\"}}\n" +
+//                "          }\n" +
+//                "        }\n" +
+//                "    }\n" +
+//                "}";
+//        JSONObject jsonObject = new JSONObject(dsl);
+//        jsonObject.put("size", 50);
+//        jsonObject.put("sort", Collections.singletonList(Collections.singletonMap(
+//                "pub_time", Collections.singletonMap("order", "desc"))));
+//        jsonObject.put("_source", queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList()));
+//        dsl = jsonObject.toString();
+
         String startDate = "2023-09-01";
         String endDate = "2023-09-01";
-        List<EsField> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME, IP_REGION, SOURCE_NAME, CHECK_IN_AREA, LEVEL_NAME);
-//        List<EsField> queryFields = Arrays.asList(ID, PUB_TIME);
-        String dsl = "{\n" +
-                "    \"size\": 50,\n" +
-                "    \"sort\": [\n" +
-                "        {\n" +
-                "            \"pub_time\": {\n" +
-                "                \"order\": \"desc\"\n" +
-                "            }\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"query\": {\n" +
-                "        \"bool\": {\n" +
-                "            \"must\": {\n" +
-                "              \"range\": {\"pub_time\": {\"gte\": \"2023-09-01 00:10:00\",\"lte\": \"2023-09-01 00:11:00\"}}\n" +
-                "          }\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-        JSONObject jsonObject = new JSONObject(dsl);
-        jsonObject.put("_source", queryFields.stream().map(EsField::getQueryField).distinct().collect(Collectors.toList()));
-        dsl = jsonObject.toString();
+
+        int size = 50;
+        List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
+        String keywordExpression = "";
+        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
+                {DEP, new Object[]{"1", "2"}},
+                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
+                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
+                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
+                {HOST_NAME, new Object[]{"baidu.com"}},
+                {AUTHOR, new Object[]{"zhangsan"}},
+        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
+        String dsl = buildDslStr(queryFields, queryConditions, keywordExpression, size);
         log.debug("dsl: {}", dsl);
+
         DslQueryParam dslQueryParam = new DslQueryParam();
         List<String> indexNames = getIndexNames(startDate, endDate);
         log.debug("indexNames: {}", indexNames);
@@ -109,12 +188,12 @@ public class YuqingDataExportTest {
         log.debug("outputFilePath: {}", outputFilePath);
     }
 
-    private LabelAndData convertToLabelAndData(List<JSONObject> jsonObjectList, List<EsField> queryFields) {
+    private LabelAndData convertToLabelAndData(List<JSONObject> jsonObjectList, List<EsFieldInfo> queryFields) {
         if (CollectionUtils.isEmpty(jsonObjectList) || CollectionUtils.isEmpty(queryFields)) {
             return null;
         }
         LabelAndData labelAndData = new LabelAndData();
-        labelAndData.setLabels(queryFields.stream().map(EsField::getLabelName).collect(Collectors.toList()));
+        labelAndData.setLabels(queryFields.stream().map(EsFieldInfo::getLabelName).collect(Collectors.toList()));
         List<List<Object>> valuesList = new ArrayList<>();
         jsonObjectList.forEach(jsonObject -> {
             List<Object> values = new ArrayList<>();
@@ -139,7 +218,7 @@ public class YuqingDataExportTest {
      * @param jsonObjectList
      * @param queryFields
      */
-    private void addTranslateField(List<JSONObject> jsonObjectList, List<EsField> queryFields) {
+    private void addTranslateField(List<JSONObject> jsonObjectList, List<EsFieldInfo> queryFields) {
         if (CollectionUtils.isEmpty(jsonObjectList) || CollectionUtils.isEmpty(queryFields)) {
             return;
         }
