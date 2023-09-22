@@ -10,9 +10,6 @@ import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Disabled;
@@ -88,44 +85,34 @@ class YuqingDataExportTest {
                 {AUTHOR, new Object[]{"zhangsan"}},
         }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
 
-        String dsl = buildDslStr(queryFields, queryConditions, keywordExpression, 50);
+        String dsl = DslBuilder.buildForSearch(queryFields, queryConditions,
+                keywordExpression, 50, EsField.PUB_TIME, SortOrder.DESC);
 
     }
 
-    private String buildDslStr(List<EsFieldInfo> queryFields,
-                               Map<EsFieldInfo, Object[]> queryConditions,
-                               String keywordExpression,
-                               Integer size,
-                               String orderField,
-                               SortOrder sortOrder) {
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        if (queryFields != null) {
-            List<String> fetchFields = queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList());
-            searchSourceBuilder.fetchSource(fetchFields.toArray(new String[0]), null);
-        }
-        if (size != null) {
-            searchSourceBuilder.size(size);
-        }
-        if (orderField != null && sortOrder != null) {
-            searchSourceBuilder.sort(orderField, sortOrder);
-        }
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        // 非垃圾数据（默认条件，和舆情搜索保持一致）
-        boolQueryBuilder.must(QueryBuilders.termQuery(EsField.STATUS, "0"));
-        BoolQueryBuilder keywordBoolQuery = KeywordBuilder.getBoolQueryBuilderByExpression(keywordExpression);
-        if (keywordBoolQuery != null) {
-            boolQueryBuilder.must(keywordBoolQuery);
-        }
-        if (queryConditions != null) {
-            for (Map.Entry<EsFieldInfo, Object[]> entry : queryConditions.entrySet()) {
-                EsFieldInfo esFieldInfo = entry.getKey();
-                Object[] values = entry.getValue();
-                boolQueryBuilder.must(esFieldInfo.getQueryFunction().apply(values));
-            }
-        }
-        searchSourceBuilder.query(boolQueryBuilder);
-        log.debug("searchSourceBuilder: {}", searchSourceBuilder);
-        return searchSourceBuilder.toString();
+    @Test
+    void count() throws ParseException {
+        String startDate = "2023-09-20";
+        String endDate = "2023-09-22";
+        String keywordExpression = "A+(B|C)";
+        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
+//                {DEP, new Object[]{"1", "2"}},
+//                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
+//                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
+//                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
+//                {HOST_NAME, new Object[]{"bing.com"}},
+//                {AUTHOR, new Object[]{"Zhangsan"}},
+        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
+        String dsl = DslBuilder.buildForCount(queryConditions,
+                keywordExpression);
+        log.debug("dsl: {}", dsl);
+        DslQueryParam dslQueryParam = new DslQueryParam();
+        List<String> indexNames = getIndexNames(startDate, endDate);
+        log.debug("indexNames: {}", indexNames);
+        dslQueryParam.setIndex(indexNames);
+        dslQueryParam.setDsl(dsl);
+        long count = esReader.count(restClient, dslQueryParam);
+        log.debug("count: {}", count);
     }
 
     @Test
@@ -153,9 +140,9 @@ class YuqingDataExportTest {
         String startDate = "2023-09-01";
         String endDate = "2023-09-01";
 
-        int size = 50;
+        Integer size = 50;
         List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
-        String keywordExpression = "";
+        String keywordExpression = "A+(B+C)";
         Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
                 {DEP, new Object[]{"1", "2"}},
                 {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
@@ -164,7 +151,8 @@ class YuqingDataExportTest {
                 {HOST_NAME, new Object[]{"baidu.com"}},
                 {AUTHOR, new Object[]{"zhangsan"}},
         }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
-        String dsl = buildDslStr(queryFields, queryConditions, keywordExpression, size);
+        String dsl = DslBuilder.buildForSearch(queryFields, queryConditions,
+                keywordExpression, size, EsField.PUB_TIME, SortOrder.DESC);
         log.debug("dsl: {}", dsl);
 
         DslQueryParam dslQueryParam = new DslQueryParam();
