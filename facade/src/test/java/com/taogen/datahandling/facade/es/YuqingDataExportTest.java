@@ -141,7 +141,10 @@ class YuqingDataExportTest {
         String endDate = "2023-09-01";
 
         Integer size = 50;
-        List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
+        // exporting all fields
+//        List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
+        // basic fields
+        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
         String keywordExpression = "A+(B+C)";
         Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
                 {DEP, new Object[]{"1", "2"}},
