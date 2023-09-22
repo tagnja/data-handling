@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DslBuilder {
 
-    public static String buildDslStr(List<EsFieldInfo> queryFields,
-                                     Map<EsFieldInfo, Object[]> queryConditions,
-                                     String keywordExpression,
-                                     Integer size,
-                                     String orderField,
-                                     SortOrder sortOrder) {
+    public static String buildForSearch(List<EsFieldInfo> queryFields,
+                                        Map<EsFieldInfo, Object[]> queryConditions,
+                                        String keywordExpression,
+                                        Integer size,
+                                        String orderField,
+                                        SortOrder sortOrder) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         if (queryFields != null) {
             List<String> fetchFields = queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList());
@@ -52,8 +52,8 @@ public class DslBuilder {
         return searchSourceBuilder.toString();
     }
 
-    public static String buildDslStrForCount(Map<EsFieldInfo, Object[]> queryConditions,
-                                             String keywordExpression) {
+    public static String buildForCount(Map<EsFieldInfo, Object[]> queryConditions,
+                                       String keywordExpression) {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         // 非垃圾数据（默认条件，和舆情搜索保持一致）

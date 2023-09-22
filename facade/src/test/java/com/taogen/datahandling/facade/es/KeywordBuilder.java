@@ -63,7 +63,7 @@ public class KeywordBuilder {
             }
             if (operandPattern.matcher(item).matches()) {
                 BoolQueryBuilder keywordBoolFilter = getKeywordBoolFilter(item);
-                if (operatorPattern.matcher(symbolStack.peek()).matches() &&
+                if (!symbolStack.isEmpty() && operatorPattern.matcher(symbolStack.peek()).matches() &&
                         !operandStack.isEmpty()) {
                     String operator = symbolStack.pop();
                     operandStack.push(mergeBoolQueryBuilder(operandStack.pop(), keywordBoolFilter, operator));
