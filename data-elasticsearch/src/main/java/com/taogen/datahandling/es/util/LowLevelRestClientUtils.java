@@ -92,4 +92,16 @@ public class LowLevelRestClientUtils {
         }
         return OrgJsonUtil.jsonStrToJsonObject(stringBuilder.toString());
     }
+
+    public static long count(RestClient restClient, List<String> index, String dsl) {
+        long count = 0;
+        try {
+            String endpoint = "/" + String.join(",", index) + "/_count";
+            JSONObject esResult = search(restClient, endpoint, dsl);
+            count = esResult.getLong("count");
+        } catch (IOException e) {
+            log.error("count error", e);
+        }
+        return count;
+    }
 }

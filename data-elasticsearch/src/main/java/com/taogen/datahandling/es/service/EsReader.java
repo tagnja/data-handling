@@ -24,4 +24,6 @@ public interface EsReader {
      * @throws IOException
      */
     List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException;
+
+    long count(RestClient restClient, DslQueryParam dslQueryParam);
 }

@@ -29,6 +29,13 @@ public class EsReaderImpl implements EsReader {
         return itemJsonList;
     }
 
+    @Override
+    public long count(RestClient restClient, DslQueryParam dslQueryParam) {
+        long count = LowLevelRestClientUtils.count(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl());
+        log.debug("count: {}", count);
+        return count;
+    }
+
     private LabelAndData convertToLabelAndData(List<JSONObject> itemJsonList, DslQueryParam dslQueryParam) {
         LabelAndData labelAndData = new LabelAndData();
         labelAndData.setLabels(dslQueryParam.getLabels());

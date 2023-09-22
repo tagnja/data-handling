@@ -28,6 +28,23 @@ class EsReaderTest {
 
     @Test
     @Disabled
+    void count() {
+        DslQueryParam dslQueryParam = new DslQueryParam();
+        dslQueryParam.setIndex(Arrays.asList("alias-meta-20230901"));
+        dslQueryParam.setDsl("{\n" +
+                "    \"query\": {\n" +
+                "        \"bool\": {\n" +
+                "            \"must\": {\n" +
+                "              \"range\": {\"pub_time\": {\"gte\": \"2023-09-01 00:10:00\",\"lte\": \"2023-09-01 00:11:00\"}}\n" +
+                "          }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}");
+        long count = esReader.count(restClient, dslQueryParam);
+        log.debug("count: {}", count);
+    }
+    @Test
+    @Disabled
     void readAll() throws IOException {
         DslQueryParam dslQueryParam = new DslQueryParam();
         dslQueryParam.setIndex(Arrays.asList("alias-meta-20230901"));
