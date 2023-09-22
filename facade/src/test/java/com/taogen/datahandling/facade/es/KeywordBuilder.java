@@ -18,7 +18,7 @@ public class KeywordBuilder {
      * Build BoolQueryBuilder by keyword expression
      * <p>
      * keyword: a-z, A-Z, 0-9, _, 中文
-     * operator: |, +, -
+     * operator: |, +, - (All operators have the same priority)
      *
      * @param keywordExpression
      * @return
@@ -36,10 +36,10 @@ public class KeywordBuilder {
                 .replaceAll(" ", "")
                 .replaceAll("　", "");
         Pattern itemPattern = Pattern.compile(
-                "([(]|[)]|[|]|[+]|[-]|\\w+|[\u4e00-\u9fa5]+)");
-        Pattern operandPattern = Pattern.compile("\\w+|[\u4e00-\u9fa5]+");
-        Pattern symbolPattern = Pattern.compile("[(]|[)]|[|]|[+]|[-]");
-        Pattern operatorPattern = Pattern.compile("[|]|[+]|[-]");
+                "([()|+-]|[0-9a-zA-Z\u4e00-\u9fa5]+)");
+        Pattern operandPattern = Pattern.compile("[0-9a-zA-Z\u4e00-\u9fa5]+");
+        Pattern symbolPattern = Pattern.compile("[()|+-]");
+        Pattern operatorPattern = Pattern.compile("[|+-]");
         Queue<String> queue = new ArrayDeque<>();
         Deque<BoolQueryBuilder> operandStack = new ArrayDeque<>();
         Deque<String> symbolStack = new ArrayDeque<>();
