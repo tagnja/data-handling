@@ -1,5 +1,7 @@
 package com.taogen.datahandling.facade.es;
 
+import com.taogen.commons.collection.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -13,6 +15,7 @@ import java.util.regex.Pattern;
 /**
  * @author taogen
  */
+@Slf4j
 public class KeywordBuilder {
     /**
      * Build BoolQueryBuilder by keyword expression
@@ -50,12 +53,15 @@ public class KeywordBuilder {
         System.out.println("queue: " + queue);
         while (!queue.isEmpty()) {
             String item = queue.poll();
+            log.debug("item: {}", item);
             if (symbolPattern.matcher(item).matches()) {
                 if (")".equals(item)) {
                     symbolStack.pop();
                     if (operandStack.size() > 1) {
                         String operator = symbolStack.pop();
-                        operandStack.push(mergeBoolQueryBuilder(operandStack.pop(), operandStack.pop(), operator));
+                        BoolQueryBuilder operand2 = operandStack.pop();
+                        BoolQueryBuilder operand1 = operandStack.pop();
+                        operandStack.push(mergeBoolQueryBuilder(operand1, operand2, operator));
                     }
                 } else {
                     symbolStack.push(item);
@@ -80,18 +86,39 @@ public class KeywordBuilder {
 
     private static BoolQueryBuilder mergeBoolQueryBuilder(BoolQueryBuilder operand1, BoolQueryBuilder operand2, String operator) {
         if ("|".equals(operator)) {
-            return QueryBuilders.boolQuery()
-                    .should(operand1)
-                    .should(operand2)
-                    .minimumShouldMatch(1);
+            if (CollectionUtils.isEmpty(operand1.must()) &&
+                    CollectionUtils.isEmpty(operand1.mustNot()) &&
+                    CollectionUtils.isNotEmpty(operand1.should())) {
+                operand1.should().addAll(operand2.should());
+                return operand1;
+            } else {
+                return QueryBuilders.boolQuery()
+                        .should(operand1)
+                        .should(operand2)
+                        .minimumShouldMatch(1);
+            }
         } else if ("+".equals(operator)) {
-            return QueryBuilders.boolQuery()
-                    .must(operand1)
-                    .must(operand2);
+            if (CollectionUtils.isEmpty(operand1.should()) &&
+                    CollectionUtils.isEmpty(operand1.mustNot()) &&
+                    CollectionUtils.isNotEmpty(operand1.must())) {
+                operand1.must().addAll(operand2.must());
+                return operand1;
+            } else {
+                return QueryBuilders.boolQuery()
+                        .must(operand1)
+                        .must(operand2);
+            }
         } else if ("-".equals(operator)) {
-            return QueryBuilders.boolQuery()
-                    .must(operand1)
-                    .mustNot(operand2);
+            if (CollectionUtils.isEmpty(operand1.should()) &&
+                    CollectionUtils.isEmpty(operand1.must()) &&
+                    CollectionUtils.isNotEmpty(operand1.mustNot())) {
+                operand1.mustNot().addAll(operand2.mustNot());
+                return operand1;
+            } else {
+                return QueryBuilders.boolQuery()
+                        .must(operand1)
+                        .mustNot(operand2);
+            }
         }
         return null;
     }
