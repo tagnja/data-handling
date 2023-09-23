@@ -100,6 +100,7 @@ public class LowLevelRestClientUtils {
             String endpoint = "/" + String.join(",", index) + "/_count";
             JSONObject esResult = search(restClient, endpoint, dsl);
             count = esResult.getLong("count");
+            log.debug("{} - count: {}", index, count);
         } catch (IOException e) {
             log.error("count error", e);
         }

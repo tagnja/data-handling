@@ -36,15 +36,24 @@ public class EsReaderImpl implements EsReader {
         } else {
             itemJsonList.addAll(LowLevelRestClientUtils.scrollQuery(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl()));
         }
-        log.debug("Summary:\n====================\ntotal size: {}\nreadAll cost {} ms\n====================",
+        log.debug("Summary:\n====================\ntotal size: {}\nreadAll cost: {} ms\n====================",
                 itemJsonList.size(), System.currentTimeMillis() - startTime);
         return itemJsonList;
     }
 
     @Override
     public long count(RestClient restClient, DslQueryParam dslQueryParam) {
-        long count = LowLevelRestClientUtils.count(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl());
-        log.debug("count: {}", count);
+        long startTime = System.currentTimeMillis();
+        long count = 0;
+        if (dslQueryParam.isBatch()) {
+            for (String index : dslQueryParam.getIndex()) {
+                count += LowLevelRestClientUtils.count(restClient, Arrays.asList(index), dslQueryParam.getDsl());
+            }
+        } else {
+            count = LowLevelRestClientUtils.count(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl());
+        }
+        log.debug("Summary:\n====================\ntotal count: {}\ncount cost: {} ms\n====================",
+                count, System.currentTimeMillis() - startTime);
         return count;
     }
 
