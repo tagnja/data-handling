@@ -97,7 +97,7 @@ public class KeywordBuilder {
                     CollectionUtils.isEmpty(operand1.mustNot()) &&
                     CollectionUtils.isNotEmpty(operand1.should())) {
                 // operand1 and operand2 only have should
-                if (CollectionUtils.isNotEmpty(operand2.must()) &&
+                if (CollectionUtils.isNotEmpty(operand2.must()) ||
                         CollectionUtils.isNotEmpty(operand2.mustNot())) {
                     operand2 = QueryBuilders.boolQuery().should(operand2);
                 }
