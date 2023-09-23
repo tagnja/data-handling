@@ -66,7 +66,7 @@ class EsReaderTest {
                 "        }\n" +
                 "    }\n" +
                 "}");
-        List<JSONObject> labelAndData = esReader.readAll(restClient, dslQueryParam);
+        List<JSONObject> labelAndData = esReader.readAll(restClient, dslQueryParam, null);
         log.debug("labelAndData: {}", labelAndData);
     }
 }

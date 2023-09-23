@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -26,7 +27,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EsReaderImpl implements EsReader {
     @Override
-    public List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException {
+    public List<JSONObject> readAll(RestClient restClient,
+                                    DslQueryParam dslQueryParam,
+                                    Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException {
         long startTime = System.currentTimeMillis();
         List<JSONObject> itemJsonList = new ArrayList<>();
         if (dslQueryParam.isBatch()) {
@@ -38,6 +41,9 @@ public class EsReaderImpl implements EsReader {
             }
         } else {
             itemJsonList.addAll(LowLevelRestClientUtils.scrollQuery(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl()));
+        }
+        if (dataConverter != null) {
+            itemJsonList = dataConverter.apply(itemJsonList);
         }
         log.debug("Summary:\n====================\ntotal size: {}\nreadAll cost: {} ms\n====================",
                 itemJsonList.size(), System.currentTimeMillis() - startTime);
@@ -56,10 +62,14 @@ public class EsReaderImpl implements EsReader {
     @Override
     public List<JSONObject> readAllBatchWithCache(RestClient restClient,
                                                   DslQueryParam dslQueryParam,
-                                                  RedisConnection redisConnection) throws IOException {
+                                                  RedisConnection redisConnection,
+                                                  Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException {
         long startTime = System.currentTimeMillis();
         final String redisKeyTemplate = "es_data:index:%s:dsl:%s";
         List<JSONObject> itemJsonList = getJsonListBatchWithCache(restClient, dslQueryParam, redisConnection, redisKeyTemplate);
+        if (dataConverter != null) {
+            itemJsonList = dataConverter.apply(itemJsonList);
+        }
         redisConnection.del(dslQueryParam.getIndex().stream()
                 .map(item -> String.format(redisKeyTemplate, item, HashUtils.md5(dslQueryParam.getDsl())).getBytes()).collect(Collectors.toList()).toArray(new byte[][]{}));
         log.debug("delete redis keys when readAll successfully");

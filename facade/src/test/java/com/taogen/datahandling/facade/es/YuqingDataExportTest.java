@@ -170,13 +170,14 @@ class YuqingDataExportTest {
         dslQueryParam.setDsl(dsl);
         RedisConnection redisConnection = lettuceConnectionFactory.getConnection();
         List<JSONObject> jsonObjectList = esReader.readAllBatchWithCache(
-                restClient, dslQueryParam, redisConnection);
+                restClient, dslQueryParam, redisConnection, jsonObjects -> {
+                    return addTranslateField(jsonObjects, queryFields);
+                });
         if (jsonObjectList == null) {
             log.warn("No data to export!");
             System.exit(0);
         }
         log.debug("first data: {}", jsonObjectList.get(0));
-        addTranslateField(jsonObjectList, queryFields);
         LabelAndData labelAndData = convertToLabelAndData(jsonObjectList, queryFields);
         if (labelAndData == null) {
             log.warn("No data to export!");
@@ -226,9 +227,9 @@ class YuqingDataExportTest {
      * @param jsonObjectList
      * @param queryFields
      */
-    private void addTranslateField(List<JSONObject> jsonObjectList, List<EsFieldInfo> queryFields) {
+    private List<JSONObject> addTranslateField(List<JSONObject> jsonObjectList, List<EsFieldInfo> queryFields) {
         if (CollectionUtils.isEmpty(jsonObjectList) || CollectionUtils.isEmpty(queryFields)) {
-            return;
+            return jsonObjectList;
         }
         // addHostName
         if (queryFields.contains(HOST_NAME)) {
@@ -297,6 +298,7 @@ class YuqingDataExportTest {
                         }
                     });
         }
+        return jsonObjectList;
     }
 
     private List<String> getIndexNames(String startDate, String endDate) throws ParseException {
