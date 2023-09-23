@@ -3,6 +3,7 @@ package com.taogen.datahandling.es.service;
 import com.taogen.datahandling.es.vo.DslQueryParam;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONObject;
+import org.springframework.data.redis.connection.RedisConnection;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +25,10 @@ public interface EsReader {
      * @throws IOException
      */
     List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException;
+
+    List<JSONObject> readAllWithCache(RestClient restClient,
+                                      DslQueryParam dslQueryParam,
+                                      RedisConnection redisConnection) throws IOException;
 
     long count(RestClient restClient, DslQueryParam dslQueryParam);
 }
