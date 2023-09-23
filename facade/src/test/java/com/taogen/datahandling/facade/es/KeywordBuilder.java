@@ -66,8 +66,7 @@ public class KeywordBuilder {
                 } else {
                     symbolStack.push(item);
                 }
-            }
-            if (operandPattern.matcher(item).matches()) {
+            } else if (operandPattern.matcher(item).matches()) {
                 BoolQueryBuilder keywordBoolFilter = getKeywordBoolFilter(item);
                 if (!symbolStack.isEmpty() && operatorPattern.matcher(symbolStack.peek()).matches() &&
                         !operandStack.isEmpty()) {
@@ -84,41 +83,47 @@ public class KeywordBuilder {
         return operandStack.pop();
     }
 
+    /**
+     * Merge two BoolQueryBuilder by operator
+     *
+     * @param operand1
+     * @param operand2
+     * @param operator
+     * @return
+     */
     private static BoolQueryBuilder mergeBoolQueryBuilder(BoolQueryBuilder operand1, BoolQueryBuilder operand2, String operator) {
         if ("|".equals(operator)) {
             if (CollectionUtils.isEmpty(operand1.must()) &&
                     CollectionUtils.isEmpty(operand1.mustNot()) &&
                     CollectionUtils.isNotEmpty(operand1.should())) {
+                // operand1 and operand2 only have should
+                if (CollectionUtils.isNotEmpty(operand2.must()) &&
+                        CollectionUtils.isNotEmpty(operand2.mustNot())) {
+                    operand2 = QueryBuilders.boolQuery().should(operand2);
+                }
                 operand1.should().addAll(operand2.should());
                 return operand1;
             } else {
+                // operand1 has must or must_not
                 return QueryBuilders.boolQuery()
                         .should(operand1)
                         .should(operand2)
                         .minimumShouldMatch(1);
             }
         } else if ("+".equals(operator)) {
-            if (CollectionUtils.isEmpty(operand1.should()) &&
-                    CollectionUtils.isEmpty(operand1.mustNot()) &&
-                    CollectionUtils.isNotEmpty(operand1.must())) {
-                operand1.must().addAll(operand2.must());
-                return operand1;
-            } else {
-                return QueryBuilders.boolQuery()
-                        .must(operand1)
-                        .must(operand2);
+            if (CollectionUtils.isEmpty(operand1.must()) && CollectionUtils.isEmpty(operand1.mustNot())) {
+                // operand1 only have should
+                operand1 = QueryBuilders.boolQuery().must(operand1);
             }
+            operand1.must(operand2);
+            return operand1;
         } else if ("-".equals(operator)) {
-            if (CollectionUtils.isEmpty(operand1.should()) &&
-                    CollectionUtils.isEmpty(operand1.must()) &&
-                    CollectionUtils.isNotEmpty(operand1.mustNot())) {
-                operand1.mustNot().addAll(operand2.mustNot());
-                return operand1;
-            } else {
-                return QueryBuilders.boolQuery()
-                        .must(operand1)
-                        .mustNot(operand2);
+            if (CollectionUtils.isEmpty(operand1.must()) && CollectionUtils.isEmpty(operand1.mustNot())) {
+                // operand1 only have should
+                operand1 = QueryBuilders.boolQuery().must(operand1);
             }
+            operand1.mustNot(operand2);
+            return operand1;
         }
         return null;
     }
