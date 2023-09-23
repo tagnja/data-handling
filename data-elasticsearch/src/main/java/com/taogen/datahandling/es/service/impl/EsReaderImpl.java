@@ -54,9 +54,9 @@ public class EsReaderImpl implements EsReader {
      * @throws IOException
      */
     @Override
-    public List<JSONObject> readAllWithCache(RestClient restClient,
-                                             DslQueryParam dslQueryParam,
-                                             RedisConnection redisConnection) throws IOException {
+    public List<JSONObject> readAllBatchWithCache(RestClient restClient,
+                                                  DslQueryParam dslQueryParam,
+                                                  RedisConnection redisConnection) throws IOException {
         long startTime = System.currentTimeMillis();
         final String redisKeyTemplate = "es_data:index:%s:dsl:%s";
         List<JSONObject> itemJsonList = getJsonListBatchWithCache(restClient, dslQueryParam, redisConnection, redisKeyTemplate);

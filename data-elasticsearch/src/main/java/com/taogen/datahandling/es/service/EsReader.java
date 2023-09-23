@@ -26,9 +26,9 @@ public interface EsReader {
      */
     List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException;
 
-    List<JSONObject> readAllWithCache(RestClient restClient,
-                                      DslQueryParam dslQueryParam,
-                                      RedisConnection redisConnection) throws IOException;
+    List<JSONObject> readAllBatchWithCache(RestClient restClient,
+                                           DslQueryParam dslQueryParam,
+                                           RedisConnection redisConnection) throws IOException;
 
     long count(RestClient restClient, DslQueryParam dslQueryParam);
 }
