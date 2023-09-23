@@ -18,6 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -52,6 +54,8 @@ class YuqingDataExportTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired(required = true)
     private ExcelWriter excelWriter;
+    @Autowired
+    private LettuceConnectionFactory lettuceConnectionFactory;
 
     @Test
     void test() {
@@ -147,12 +151,12 @@ class YuqingDataExportTest {
         List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
         String keywordExpression = "A+(B+C)";
         Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
-                {DEP, new Object[]{"1", "2"}},
-                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
-                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
-                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
-                {HOST_NAME, new Object[]{"baidu.com"}},
-                {AUTHOR, new Object[]{"zhangsan"}},
+//                {DEP, new Object[]{"1", "2"}},
+//                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
+//                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
+//                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
+//                {HOST_NAME, new Object[]{"baidu.com"}},
+//                {AUTHOR, new Object[]{"zhangsan"}},
         }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
         String dsl = DslBuilder.buildForSearch(queryFields, queryConditions,
                 keywordExpression, size, EsField.PUB_TIME, SortOrder.DESC);
@@ -160,10 +164,13 @@ class YuqingDataExportTest {
 
         DslQueryParam dslQueryParam = new DslQueryParam();
         List<String> indexNames = getIndexNames(startDate, endDate);
+        Collections.reverse(indexNames);
         log.debug("indexNames: {}", indexNames);
         dslQueryParam.setIndex(indexNames);
         dslQueryParam.setDsl(dsl);
-        List<JSONObject> jsonObjectList = esReader.readAll(restClient, dslQueryParam);
+        RedisConnection redisConnection = lettuceConnectionFactory.getConnection();
+        List<JSONObject> jsonObjectList = esReader.readAllBatchWithCache(
+                restClient, dslQueryParam, redisConnection);
         if (jsonObjectList == null) {
             log.warn("No data to export!");
             System.exit(0);
