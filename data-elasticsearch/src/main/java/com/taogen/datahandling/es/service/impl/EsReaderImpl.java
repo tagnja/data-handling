@@ -1,5 +1,6 @@
 package com.taogen.datahandling.es.service.impl;
 
+import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.service.EsReader;
 import com.taogen.datahandling.es.util.LowLevelRestClientUtils;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,9 +25,19 @@ public class EsReaderImpl implements EsReader {
     @Override
     public List<JSONObject> readAll(RestClient restClient, DslQueryParam dslQueryParam) throws IOException {
         long startTime = System.currentTimeMillis();
-        List<JSONObject> itemJsonList = LowLevelRestClientUtils.scrollQuery(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl());
-        long endTime = System.currentTimeMillis();
-        log.debug("readAll cost {} ms", endTime - startTime);
+        List<JSONObject> itemJsonList = new ArrayList<>();
+        if (dslQueryParam.isBatch()) {
+            for (String index : dslQueryParam.getIndex()) {
+                List<JSONObject> tempItemJsonList = LowLevelRestClientUtils.scrollQuery(restClient, Arrays.asList(index), dslQueryParam.getDsl());
+                if (CollectionUtils.isNotEmpty(tempItemJsonList)) {
+                    itemJsonList.addAll(tempItemJsonList);
+                }
+            }
+        } else {
+            itemJsonList.addAll(LowLevelRestClientUtils.scrollQuery(restClient, dslQueryParam.getIndex(), dslQueryParam.getDsl()));
+        }
+        log.debug("Summary:\n====================\ntotal size: {}\nreadAll cost {} ms\n====================",
+                itemJsonList.size(), System.currentTimeMillis() - startTime);
         return itemJsonList;
     }
 

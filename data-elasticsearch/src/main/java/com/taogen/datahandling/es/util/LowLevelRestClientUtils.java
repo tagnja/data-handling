@@ -23,29 +23,30 @@ public class LowLevelRestClientUtils {
      * Scroll query
      *
      * @param restClient
-     * @param index
+     * @param indexes
      * @param dsl
      * @return JSON string list
      */
     public static List<JSONObject> scrollQuery(RestClient restClient,
-                                               List<String> index,
+                                               List<String> indexes,
                                                String dsl) throws IOException {
         List<JSONObject> result = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         int searchTimes = 0;
-        String endpoint = "/" + String.join(",", index) + "/_search?scroll=1m";
+        String endpoint = "/" + String.join(",", indexes) + "/_search?scroll=1m";
+        log.debug("endpoint: {}", endpoint);
         JSONObject esResult = search(restClient, endpoint, dsl);
         int total = esResult.getJSONObject("hits").getInt("total");
         searchTimes++;
         String scrollId = esResult.getString("_scroll_id");
-        log.debug("scrollId: {}", scrollId);
+        log.debug("{} - scrollId: {}", indexes, scrollId);
         JSONArray hits = esResult.getJSONObject("hits").getJSONArray("hits");
         while (hits != null && hits.length() > 0) {
             addHitsToList(result, hits);
             esResult = scrollSearch(restClient, scrollId);
             long elapsedTime = (System.currentTimeMillis() - startTime);
             long remainingTime = (elapsedTime / result.size() * (total - result.size()));
-            log.debug("scroll {} - {}/{}, {}, elapsed {}s, left {}s", searchTimes, result.size(), total, result.size() * 100 / total + "%", elapsedTime / 1000, remainingTime / 1000);
+            log.debug("{} - scroll {} - {}/{}, {}, elapsed {}s, left {}s", indexes, searchTimes, result.size(), total, result.size() * 100 / total + "%", elapsedTime / 1000, remainingTime / 1000);
             searchTimes++;
             scrollId = esResult.getString("_scroll_id");
             hits = esResult.getJSONObject("hits").getJSONArray("hits");
