@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author taogen
@@ -30,7 +31,7 @@ public interface EsReader {
                              DslQueryParam dslQueryParam,
                              Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException;
 
-    List<JSONObject> readAllBatchWithCache(RestClient restClient,
+    List<JSONObject> readAllBatchWithCache(Supplier<RestClient> restClientSupplier,
                                            DslQueryParam dslQueryParam,
                                            RedisConnection redisConnection,
                                            Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException, ExecutionException, InterruptedException;

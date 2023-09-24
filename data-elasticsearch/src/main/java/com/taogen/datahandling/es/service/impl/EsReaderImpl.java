@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -57,20 +58,20 @@ public class EsReaderImpl implements EsReader {
     /**
      * Read all data from elasticsearch with cache
      *
-     * @param restClient
+     * @param restClientSupplier
      * @param dslQueryParam   ignore batch field of dslQueryParam
      * @param redisConnection
      * @return
      * @throws IOException
      */
     @Override
-    public List<JSONObject> readAllBatchWithCache(RestClient restClient,
+    public List<JSONObject> readAllBatchWithCache(Supplier<RestClient> restClientSupplier,
                                                   DslQueryParam dslQueryParam,
                                                   RedisConnection redisConnection,
                                                   Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException, ExecutionException, InterruptedException {
         long startTime = System.currentTimeMillis();
         final String redisKeyTemplate = "es_data:index:%s:dsl:%s";
-        List<JSONObject> itemJsonList = getJsonListBatchWithCache(restClient, dslQueryParam, redisConnection, redisKeyTemplate);
+        List<JSONObject> itemJsonList = getJsonListBatchWithCache(restClientSupplier, dslQueryParam, redisConnection, redisKeyTemplate);
         if (dataConverter != null) {
             itemJsonList = dataConverter.apply(itemJsonList);
         }
@@ -82,7 +83,7 @@ public class EsReaderImpl implements EsReader {
         return itemJsonList;
     }
 
-    private List<JSONObject> getJsonListBatchWithCache(RestClient restClient,
+    private List<JSONObject> getJsonListBatchWithCache(Supplier<RestClient> restClientSupplier,
                                                        DslQueryParam dslQueryParam,
                                                        RedisConnection redisConnection,
                                                        String redisKeyTemplate) throws IOException, InterruptedException, ExecutionException {
@@ -99,6 +100,8 @@ public class EsReaderImpl implements EsReader {
                     completionService.submit(() -> {
                         String threadName = Thread.currentThread().getName();
                         log.debug("thread {} start to write data to redis", threadName);
+                        RestClient restClient = restClientSupplier.get();
+                        log.debug("restClient: {}", restClient);
                         writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
                         return threadName;
                     });
@@ -114,6 +117,7 @@ public class EsReaderImpl implements EsReader {
                 throw e;
             }
         } else {
+            RestClient restClient = restClientSupplier.get();
             for (String index : dslQueryParam.getIndex()) {
                 writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
             }
