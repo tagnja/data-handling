@@ -1,5 +1,6 @@
 package com.taogen.datahandling.es.util;
 
+import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.commons.jsonparser.orgjson.OrgJsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.Request;
@@ -53,6 +54,9 @@ public class LowLevelRestClientUtils {
         }
         log.debug("search times: {}", searchTimes);
         log.debug("result size: {}", result.size());
+        if (CollectionUtils.isNotEmpty(result)) {
+            log.debug("first result: {}", result.get(0));
+        }
         return result;
     }
 

@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -120,7 +121,7 @@ class YuqingDataExportTest {
     }
 
     @Test
-    void exportDataToExcel() throws IOException, ParseException {
+    void exportDataToExcel() throws IOException, ParseException, ExecutionException, InterruptedException {
 //        String startDate = "2023-09-01";
 //        String endDate = "2023-09-01";
 //        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME, IP_REGION, SOURCE_NAME, CHECK_IN_AREA, LEVEL_NAME);
@@ -168,6 +169,7 @@ class YuqingDataExportTest {
         log.debug("indexNames: {}", indexNames);
         dslQueryParam.setIndex(indexNames);
         dslQueryParam.setDsl(dsl);
+        dslQueryParam.setConcurrent(true);
         RedisConnection redisConnection = lettuceConnectionFactory.getConnection();
         List<JSONObject> jsonObjectList = esReader.readAllBatchWithCache(
                 restClient, dslQueryParam, redisConnection, jsonObjects -> {
