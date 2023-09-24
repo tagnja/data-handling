@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -57,6 +59,8 @@ class YuqingDataExportTest {
     private ExcelWriter excelWriter;
     @Autowired
     private LettuceConnectionFactory lettuceConnectionFactory;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Test
     void test() {
@@ -169,13 +173,15 @@ class YuqingDataExportTest {
         log.debug("indexNames: {}", indexNames);
         dslQueryParam.setIndex(indexNames);
         dslQueryParam.setDsl(dsl);
-        dslQueryParam.setConcurrent(true);
+        dslQueryParam.setConcurrent(false);
         RedisConnection redisConnection = lettuceConnectionFactory.getConnection();
+        Supplier<RestClient> restClientSupplier = () -> restClient;
+//        Supplier<RestClient> restClientSupplier = () -> applicationContext.getBean(RestClient.class);
         List<JSONObject> jsonObjectList = esReader.readAllBatchWithCache(
-                restClient, dslQueryParam, redisConnection, jsonObjects -> {
+                restClientSupplier, dslQueryParam, redisConnection, jsonObjects -> {
                     return addTranslateField(jsonObjects, queryFields);
                 });
-        if (jsonObjectList == null) {
+        if (CollectionUtils.isEmpty(jsonObjectList)) {
             log.warn("No data to export!");
             System.exit(0);
         }
