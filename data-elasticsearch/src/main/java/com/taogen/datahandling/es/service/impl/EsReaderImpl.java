@@ -17,6 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,7 +67,7 @@ public class EsReaderImpl implements EsReader {
     public List<JSONObject> readAllBatchWithCache(RestClient restClient,
                                                   DslQueryParam dslQueryParam,
                                                   RedisConnection redisConnection,
-                                                  Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException {
+                                                  Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException, ExecutionException, InterruptedException {
         long startTime = System.currentTimeMillis();
         final String redisKeyTemplate = "es_data:index:%s:dsl:%s";
         List<JSONObject> itemJsonList = getJsonListBatchWithCache(restClient, dslQueryParam, redisConnection, redisKeyTemplate);
@@ -81,19 +85,28 @@ public class EsReaderImpl implements EsReader {
     private List<JSONObject> getJsonListBatchWithCache(RestClient restClient,
                                                        DslQueryParam dslQueryParam,
                                                        RedisConnection redisConnection,
-                                                       String redisKeyTemplate) throws IOException {
+                                                       String redisKeyTemplate) throws IOException, InterruptedException, ExecutionException {
         // fetch and write data to redis if not exists
-        for (String index : dslQueryParam.getIndex()) {
-            String redisKey = String.format(redisKeyTemplate, index, HashUtils.md5(dslQueryParam.getDsl()));
-            if (!redisKeyExists(redisConnection, redisKey)) {
-                List<JSONObject> tempJsonList = LowLevelRestClientUtils.scrollQuery(restClient, Arrays.asList(index), dslQueryParam.getDsl());
-                if (!CollectionUtils.isEmpty(tempJsonList)) {
-                    redisConnection.listCommands().lPush(redisKey.getBytes(),
-                            tempJsonList.stream().map(item -> item.toString().getBytes()).collect(Collectors.toList()).toArray(new byte[][]{}));
-                    log.debug("save {} data to redis, size is {}", index, tempJsonList.size());
-                }
-            } else {
-                log.debug("redis key exists - {}", redisKey);
+        if (dslQueryParam.isConcurrent()) {
+            int threadNum = 10;
+            ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
+            ExecutorCompletionService<String> completionService =
+                    new ExecutorCompletionService<>(executorService);
+            for (String index : dslQueryParam.getIndex()) {
+                completionService.submit(() -> {
+                    String threadName = Thread.currentThread().getName();
+                    log.debug("thread {} start to write data to redis", threadName);
+                    writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
+                    return threadName;
+                });
+            }
+            for (int i = 0; i < dslQueryParam.getIndex().size(); i++) {
+                completionService.take().get();
+            }
+            executorService.shutdown();
+        } else {
+            for (String index : dslQueryParam.getIndex()) {
+                writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
             }
         }
         // read from redis
@@ -112,6 +125,22 @@ public class EsReaderImpl implements EsReader {
             }
         }
         return resultJsonList;
+    }
+
+    private void writeDataToRedis(RestClient restClient, DslQueryParam dslQueryParam, RedisConnection redisConnection, String redisKeyTemplate, String index) throws IOException {
+        String redisKey = String.format(redisKeyTemplate, index, HashUtils.md5(dslQueryParam.getDsl()));
+        if (!redisKeyExists(redisConnection, redisKey)) {
+            List<JSONObject> tempJsonList = LowLevelRestClientUtils.scrollQuery(restClient, Arrays.asList(index), dslQueryParam.getDsl());
+            if (!CollectionUtils.isEmpty(tempJsonList)) {
+                redisConnection.listCommands().rPush(redisKey.getBytes(),
+                        tempJsonList.stream().map(item -> item.toString().getBytes()).collect(Collectors.toList()).toArray(new byte[][]{}));
+                log.debug("save {} data to redis, size is {}", index, tempJsonList.size());
+                long longFor24Hours = 86400;
+                redisConnection.expire(redisKey.getBytes(), longFor24Hours);
+            }
+        } else {
+            log.debug("redis key exists - {}", redisKey);
+        }
     }
 
     private boolean redisKeyExists(RedisConnection redisConnection, String redisKey) {

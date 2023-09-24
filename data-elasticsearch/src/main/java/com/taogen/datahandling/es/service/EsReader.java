@@ -7,6 +7,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 /**
@@ -32,7 +33,7 @@ public interface EsReader {
     List<JSONObject> readAllBatchWithCache(RestClient restClient,
                                            DslQueryParam dslQueryParam,
                                            RedisConnection redisConnection,
-                                           Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException;
+                                           Function<List<JSONObject>, List<JSONObject>> dataConverter) throws IOException, ExecutionException, InterruptedException;
 
     long count(RestClient restClient, DslQueryParam dslQueryParam);
 }
