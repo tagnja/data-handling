@@ -5,6 +5,7 @@ import com.taogen.commons.jsonparser.orgjson.OrgJsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,6 +38,10 @@ public class LowLevelRestClientUtils {
         String endpoint = "/" + String.join(",", indexes) + "/_search?scroll=1m";
         log.debug("endpoint: {}", endpoint);
         JSONObject esResult = search(restClient, endpoint, dsl);
+        if (esResult == null) {
+            log.warn("esResult is null");
+            return result;
+        }
         int total = esResult.getJSONObject("hits").getInt("total");
         searchTimes++;
         String scrollId = esResult.getString("_scroll_id");
@@ -82,7 +87,33 @@ public class LowLevelRestClientUtils {
         log.debug("endpoint: {}", endpoint);
         request.setJsonEntity(dsl);
         log.debug("dsl: {}", dsl);
-        Response response = restClient.performRequest(request);
+        Response response = null;
+        try {
+            response = restClient.performRequest(request);
+        } catch (ResponseException e) {
+            if (e.getMessage().contains("index_not_found_exception")) {
+                // fix error: index_not_found_exception
+                log.error("index not found - {}", endpoint, e);
+            } else if (e.getMessage().contains("Fielddata is disabled on text fields by default")) {
+                log.error("Fielddata is disabled on text fields by default - {}", endpoint, e);
+                // Fix the error: {"type":"illegal_argument_exception","reason":"Fielddata is disabled on text fields by default...}
+                // text fields are searchable by default, but by default are not available for aggregations, sorting, or scripting. If you try to sort, aggregate, or access values from a text field using a script, you’ll see an exception indicating that field data is disabled by default on text fields. To load field data in memory, set fielddata=true on your field.
+                // Use the my_field field for searches.
+                // Use the my_field.keyword field for aggregations, sorting, or in scripts.
+                dsl = dsl.replace("\"sort\":[{\"pub_time", "\"sort\":[{\"pub_time.keyword");
+                request.setJsonEntity(dsl);
+                response = restClient.performRequest(request);
+            } else if (e.getMessage().contains("query_shard_exception") && e.getMessage().contains("No mapping found for [pub_time]")) {
+                // fix error: No mapping found for [pub_time]
+                // error info: {"type":"query_shard_exception","reason":"No mapping found for [pub_time] in order to sort on"}
+                log.error("No mapping found for [pub_time] - {}", endpoint, e);
+            } else {
+                throw e;
+            }
+        }
+        if (response == null) {
+            return null;
+        }
         return getResponseJsonObj(response);
     }
 
@@ -103,6 +134,10 @@ public class LowLevelRestClientUtils {
         try {
             String endpoint = "/" + String.join(",", index) + "/_count";
             JSONObject esResult = search(restClient, endpoint, dsl);
+            if (esResult == null) {
+                log.warn("esResult is null");
+                return count;
+            }
             count = esResult.getLong("count");
             log.debug("{} - count: {}", index, count);
         } catch (IOException e) {

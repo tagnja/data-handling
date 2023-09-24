@@ -14,4 +14,5 @@ public class DslQueryParam {
     private List<String> labels;
     private boolean batch = true;
     private boolean concurrent = false;
+    private Integer threadNum;
 }

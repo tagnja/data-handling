@@ -88,22 +88,31 @@ public class EsReaderImpl implements EsReader {
                                                        String redisKeyTemplate) throws IOException, InterruptedException, ExecutionException {
         // fetch and write data to redis if not exists
         if (dslQueryParam.isConcurrent()) {
-            int threadNum = 10;
-            ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
-            ExecutorCompletionService<String> completionService =
-                    new ExecutorCompletionService<>(executorService);
-            for (String index : dslQueryParam.getIndex()) {
-                completionService.submit(() -> {
-                    String threadName = Thread.currentThread().getName();
-                    log.debug("thread {} start to write data to redis", threadName);
-                    writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
-                    return threadName;
-                });
+            int threadNum = getConcurrentThreadNum(dslQueryParam.getThreadNum());
+            log.debug("threadNum: {}", threadNum);
+            ExecutorService executorService = null;
+            try {
+                executorService = Executors.newFixedThreadPool(threadNum);
+                ExecutorCompletionService<String> completionService =
+                        new ExecutorCompletionService<>(executorService);
+                for (String index : dslQueryParam.getIndex()) {
+                    completionService.submit(() -> {
+                        String threadName = Thread.currentThread().getName();
+                        log.debug("thread {} start to write data to redis", threadName);
+                        writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
+                        return threadName;
+                    });
+                }
+                for (int i = 0; i < dslQueryParam.getIndex().size(); i++) {
+                    completionService.take().get();
+                }
+            } catch (Exception e) {
+                if (executorService != null) {
+                    executorService.shutdown();
+                }
+                log.error("{}: {}", e.getClass().getName(), e.getMessage(), e);
+                throw e;
             }
-            for (int i = 0; i < dslQueryParam.getIndex().size(); i++) {
-                completionService.take().get();
-            }
-            executorService.shutdown();
         } else {
             for (String index : dslQueryParam.getIndex()) {
                 writeDataToRedis(restClient, dslQueryParam, redisConnection, redisKeyTemplate, index);
@@ -125,6 +134,16 @@ public class EsReaderImpl implements EsReader {
             }
         }
         return resultJsonList;
+    }
+
+    private int getConcurrentThreadNum(Integer threadNum) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        int maxThreadNum = cores * 2 + 1;
+        if (threadNum != null && threadNum > 0 && threadNum <= maxThreadNum) {
+            return threadNum;
+        } else {
+            return maxThreadNum;
+        }
     }
 
     private void writeDataToRedis(RestClient restClient, DslQueryParam dslQueryParam, RedisConnection redisConnection, String redisKeyTemplate, String index) throws IOException {
