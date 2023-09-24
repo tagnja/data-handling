@@ -107,14 +107,9 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void selectBasicInfo() {
-        /**
-         * {id=50, account=陈文霞, password=Syx001*, name=陈文霞, email=, phone=123, gmt_create=2020-11-09 09:15:01.0, gmt_modified=2023-03-02 09:09:24.0, is_deleted=0, login_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiLpmYjmlofpnJ4ifQ.CU_2jcvlCum592YbzxBZT-B46r_RPInRw_VR2pgSiYA}
-         * {id=89, account=杨天平, password=Syx001*, name=杨天平, email=, phone=13814043044, gmt_create=2022-10-27 10:51:26.0, gmt_modified=2023-03-01 18:46:01.0, is_deleted=0, login_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiLmnajlpKnlubMifQ.LMfUeh3Q6GzTjQZc7AhWaoPietGW0vUMUv_tGouAZFk}
-         * [{aCode=320602, aName=崇川区, bCode=320600, bName=南通市, cCode=320000, cName=江苏省}]
-         */
-        String countyName = "开发区";
-        String sustainUser = "陈文霞";
-        String saleUser = "芮师腾";
+        String countyName = "xxx";
+        String sustainUser = "xxx";
+        String saleUser = "xxx";
         String queryCrmUser = "select *\n" +
                 "from crm_user\n" +
                 "where name in (\"" + saleUser + "\", \"" + sustainUser + "\");";
@@ -137,8 +132,8 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
          * - 类型：其他 52
          * - 产品类型：审核 1
          * - 客户状态：试用 0
-         * - 支撑：马云菲 17
-         * - 销售：汪欣 64
+         * - 支撑：xxx 17
+         * - 销售：xxx 64
          * - 备注：批量开审核账号
          */
         Integer sustainUserId = 50;
