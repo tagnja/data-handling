@@ -82,30 +82,41 @@ public class EsReaderImpl implements EsReader {
                                                        DslQueryParam dslQueryParam,
                                                        RedisConnection redisConnection,
                                                        String redisKeyTemplate) throws IOException {
-        List<JSONObject> itemJsonList = new ArrayList<>();
+        // fetch and write data to redis if not exists
         for (String index : dslQueryParam.getIndex()) {
-            List<JSONObject> tempItemJsonList = null;
             String redisKey = String.format(redisKeyTemplate, index, HashUtils.md5(dslQueryParam.getDsl()));
-            Boolean keyExists = redisConnection.exists(redisKey.getBytes());
-            if (keyExists != null && keyExists) {
-                List<byte[]> list = redisConnection.listCommands().lRange(redisKey.getBytes(), 0, -1);
-                if (CollectionUtils.isNotEmpty(list)) {
-                    tempItemJsonList = list.stream()
-                            .map(item -> new JSONObject(new String(item)))
-                            .collect(Collectors.toList());
-                    log.debug("get {} data from redis, size is {}", index, tempItemJsonList.size());
+            if (!redisKeyExists(redisConnection, redisKey)) {
+                List<JSONObject> tempJsonList = LowLevelRestClientUtils.scrollQuery(restClient, Arrays.asList(index), dslQueryParam.getDsl());
+                if (!CollectionUtils.isEmpty(tempJsonList)) {
+                    redisConnection.listCommands().lPush(redisKey.getBytes(),
+                            tempJsonList.stream().map(item -> item.toString().getBytes()).collect(Collectors.toList()).toArray(new byte[][]{}));
+                    log.debug("save {} data to redis, size is {}", index, tempJsonList.size());
                 }
             } else {
-                tempItemJsonList = LowLevelRestClientUtils.scrollQuery(restClient, Arrays.asList(index), dslQueryParam.getDsl());
-                redisConnection.listCommands().lPush(redisKey.getBytes(),
-                        tempItemJsonList.stream().map(item -> item.toString().getBytes()).collect(Collectors.toList()).toArray(new byte[][]{}));
-                log.debug("save {} data to redis, size is {}", index, tempItemJsonList.size());
-            }
-            if (CollectionUtils.isNotEmpty(tempItemJsonList)) {
-                itemJsonList.addAll(tempItemJsonList);
+                log.debug("redis key exists - {}", redisKey);
             }
         }
-        return itemJsonList;
+        // read from redis
+        List<JSONObject> resultJsonList = new ArrayList<>();
+        for (String index : dslQueryParam.getIndex()) {
+            String redisKey = String.format(redisKeyTemplate, index, HashUtils.md5(dslQueryParam.getDsl()));
+            if (redisKeyExists(redisConnection, redisKey)) {
+                List<byte[]> list = redisConnection.listCommands().lRange(redisKey.getBytes(), 0, -1);
+                log.debug("read {} data from redis, size is {}", index, list.size());
+                if (CollectionUtils.isNotEmpty(list)) {
+                    List<JSONObject> tempJsonList = list.stream()
+                            .map(item -> new JSONObject(new String(item)))
+                            .collect(Collectors.toList());
+                    resultJsonList.addAll(tempJsonList);
+                }
+            }
+        }
+        return resultJsonList;
+    }
+
+    private boolean redisKeyExists(RedisConnection redisConnection, String redisKey) {
+        Boolean keyExists = redisConnection.exists(redisKey.getBytes());
+        return keyExists != null && keyExists;
     }
 
     @Override
