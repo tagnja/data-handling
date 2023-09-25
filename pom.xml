@@ -133,16 +133,16 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
-        <repository>
-            <id>aliyun-repos</id>
-            <url>https://maven.aliyun.com/repository/public</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+        <!--        <repository>-->
+        <!--            <id>aliyun-repos</id>-->
+        <!--            <url>https://maven.aliyun.com/repository/public</url>-->
+        <!--            <releases>-->
+        <!--                <enabled>true</enabled>-->
+        <!--            </releases>-->
+        <!--            <snapshots>-->
+        <!--                <enabled>false</enabled>-->
+        <!--            </snapshots>-->
+        <!--        </repository>-->
         <repository>
             <snapshots>
                 <enabled>false</enabled>
@@ -153,16 +153,16 @@
         </repository>
     </repositories>
     <pluginRepositories>
-        <pluginRepository>
-            <id>aliyun-repos</id>
-            <url>https://maven.aliyun.com/repository/public</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
+        <!--        <pluginRepository>-->
+        <!--            <id>aliyun-repos</id>-->
+        <!--            <url>https://maven.aliyun.com/repository/public</url>-->
+        <!--            <releases>-->
+        <!--                <enabled>true</enabled>-->
+        <!--            </releases>-->
+        <!--            <snapshots>-->
+        <!--                <enabled>false</enabled>-->
+        <!--            </snapshots>-->
+        <!--        </pluginRepository>-->
         <pluginRepository>
             <releases>
                 <updatePolicy>never</updatePolicy>
