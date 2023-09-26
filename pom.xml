@@ -30,7 +30,7 @@
     </modules>
 
     <properties>
-        <taogen-commons.version>30fec35dd6</taogen-commons.version>
+        <taogen-commons.version>9976ec2e8e</taogen-commons.version>
     </properties>
 
     <dependencyManagement>
