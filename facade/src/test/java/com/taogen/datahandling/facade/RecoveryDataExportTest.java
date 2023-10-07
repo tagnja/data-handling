@@ -21,6 +21,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,31 +41,9 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         String handledText = textModifier.splitModifyAndJoin(s, delimiter, function, " or ");
     }
 
-    @Test
-    @Disabled
-    void modifyRows_appendContainsSpecifiedWordToRows_test() throws IOException, URISyntaxException {
-        String keywords = "AA、BB、CC、DD";
-        String delimiter = "、";
-        String inputFilePath = DirectoryUtils.getUserHomeDir() + File.separator + "export" + File.separator + "test.xlsx";
-        int appendToColumn = 8;
-        // start to call modifyWorkbook
-        String[] names = keywords.split(delimiter);
-        DataFormatter formatter = new DataFormatter();
-        Consumer<Row> rowsModifyConsumer = row -> {
-            Cell titleCell = row.getCell(1);
-            String title = formatter.formatCellValue(titleCell);
-            System.out.println("title: " + title);
-            Cell contentCell = row.getCell(2);
-            String content = formatter.formatCellValue(contentCell);
-            System.out.println("content: " + content);
-            List<String> containsKeywords = Arrays.stream(names)
-                    .filter(item -> title.contains(item) || content.contains(item))
-                    .collect(Collectors.toList());
-            System.out.println("keywords: " + containsKeywords);
-            Cell cell = row.createCell(appendToColumn);
-            cell.setCellValue(String.join(delimiter, containsKeywords));
-        };
-        String outputFilePath = excelModifier.modifyRows(inputFilePath, 0, rowsModifyConsumer);
+    public static void main(String[] args) {
+        Pattern pattern = Pattern.compile("qm", Pattern.CASE_INSENSITIVE);
+        System.out.println(pattern.matcher("1Qm1").find());
     }
 
     @Test
@@ -178,14 +157,13 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
             }
         }
-        String outputDir = DirectoryUtils.getUserHomeDir() + File.separator + "export";
         String outputFileName = new StringBuilder()
                 .append("审核-数据-")
                 .append(System.currentTimeMillis())
                 .append(".xlsx")
                 .toString();
         String outputFilePath = excelWriter.writeLabelAndDataToExcel(resultLabelAndData,
-                outputDir + File.separator + outputFileName);
+                getExportDirPath() + File.separator + outputFileName);
         // 没有 ID 和 入库时间
         int appendToColumn = 6;
         int titleColumn = 0;
@@ -251,11 +229,6 @@ public class RecoveryDataExportTest extends ExportBaseTest {
             if (resultLabelAndData.getValuesList().isEmpty()) {
                 continue;
             }
-            String outputDirPath = DirectoryUtils.getUserHomeDir() + File.separator + "export";
-            File dir = new File(outputDirPath);
-            if (!dir.exists() || !dir.isDirectory()) {
-                dir.mkdirs();
-            }
             String outputFileName = new StringBuilder()
                     .append("审核-数据-")
                     .append(Objects.toString(groupName))
@@ -263,7 +236,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                     .append(".xlsx")
                     .toString();
             String outputFilePath = excelWriter.writeLabelAndDataToExcel(resultLabelAndData,
-                    outputDirPath + File.separator + outputFileName);
+                    getExportDirPath() + File.separator + outputFileName);
             System.out.println("output file path: " + outputFilePath);
             // 没有 ID 和 入库时间
             int appendToColumn = 6;

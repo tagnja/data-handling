@@ -2,7 +2,6 @@ package com.taogen.datahandling.facade;
 
 import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.commons.datatypes.string.StringUtils;
-import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.commons.office.poi.ExcelUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
@@ -72,18 +71,13 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
         sqlQueryParam.setSql(sql);
         sqlQueryParam.setBatchFetch(false);
         LabelAndData tableLabelsAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
-        String outputDirPath = DirectoryUtils.getUserHomeDir() + File.separator + "export";
-        File outputDir = new File(outputDirPath);
-        if (!outputDir.exists() || !outputDir.isDirectory()) {
-            outputDir.mkdirs();
-        }
         String outputFileName = new StringBuilder()
                 .append("审核-数据-")
                 .append(System.currentTimeMillis())
                 .append(".xlsx")
                 .toString();
         String outputFilePath = new StringBuilder()
-                .append(outputDirPath)
+                .append(getExportDirPath())
                 .append(File.separator)
                 .append(outputFileName)
                 .toString();
@@ -111,10 +105,9 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
     @Test
     @Disabled
     void removeRows() throws IOException {
-        String outputDir = DirectoryUtils.getUserHomeDir() + File.separator + "export";
         String outputFileName = "审核-数据-1666576500831.xlsx";
         String inputFilePath = new StringBuilder()
-                .append(outputDir)
+                .append(getExportDirPath())
                 .append(File.separator)
                 .append(outputFileName)
                 .toString();

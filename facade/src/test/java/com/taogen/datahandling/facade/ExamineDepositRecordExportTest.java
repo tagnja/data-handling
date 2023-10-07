@@ -1,6 +1,5 @@
 package com.taogen.datahandling.facade;
 
-import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.commons.io.FileUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
@@ -51,8 +50,7 @@ class ExamineDepositRecordExportTest extends ExportBaseTest {
             sqlQueryParam.setSql(sql);
             sqlQueryParam.setArgs(new Object[]{deptId, beginTime, endTime});
             LabelAndData labelAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
-            String outputDirPath = DirectoryUtils.getUserHomeDir() + File.separator + "export";
-            String outputPath = outputDirPath + File.separator + deptName + ".xlsx";
+            String outputPath = getExportDirPath() + File.separator + deptName + ".xlsx";
             outputPath = FileUtils.appendDateTimeToFileName(outputPath);
             log.debug("outputPath is: {}", outputPath);
             excelWriter.writeLabelAndDataToExcel(labelAndData, outputPath);

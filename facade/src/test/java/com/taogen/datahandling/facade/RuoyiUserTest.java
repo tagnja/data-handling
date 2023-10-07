@@ -1,7 +1,6 @@
 package com.taogen.datahandling.facade;
 
 import com.taogen.commons.datatypes.string.StringUtils;
-import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.commons.office.poi.ExcelUtils;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +41,7 @@ public class RuoyiUserTest extends ExportBaseTest {
     void addUserAndUserRoleAndDeptToBubbleDanyangSys() throws IOException {
         // parameter begin
         boolean executeSql = false;
-        String filePath = DirectoryUtils.getUserHomeDir() + File.separator + "export" + File.separator + "test.xlsx";
+        String filePath = getExportDirPath() + File.separator + "test.xlsx";
         int nameColNum = 1, passwdColNum = 2, leaderColNum = 3, phoneColNum = 4;
         // parameter end
         String fileSuffix = filePath.substring(filePath.lastIndexOf("."));

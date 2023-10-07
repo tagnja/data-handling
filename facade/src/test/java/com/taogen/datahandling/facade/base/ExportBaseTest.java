@@ -1,5 +1,6 @@
 package com.taogen.datahandling.facade.base;
 
+import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.datahandling.facade.service.Sql2ExcelConverter;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelModifier;
@@ -15,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.io.File;
 
 /**
  * @author Taogen
@@ -53,6 +56,16 @@ public class ExportBaseTest {
 //        log.info("config import: {}", configImportFile);
         log.info("dataSource jdbcUrl: {}", jdbcUrl);
         log.info(">>>");
+    }
+
+    protected String getExportDirPath() {
+        String outputDirPath = DirectoryUtils.getUserHomeDir() +
+                File.separator + "export";
+        File dir = new File(outputDirPath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            dir.mkdirs();
+        }
+        return outputDirPath;
     }
 
     protected XSSFCellStyle createTitleCellStyle(XSSFWorkbook workbook) {
