@@ -53,7 +53,12 @@ public class JdbcTemplateUtils {
             String batchSelectSql = MysqlUtils.wrapperPredicateToSql(sql, primaryKeyPredicate);
             batchSelectSql = MysqlUtils.wrapperQueryToSelectLimitSize(batchSelectSql, size);
             log.debug("batch select sql: {}", batchSelectSql);
-            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(batchSelectSql, args, argTypes);
+            SqlRowSet sqlRowSet;
+            if (argTypes != null) {
+                sqlRowSet = jdbcTemplate.queryForRowSet(batchSelectSql, args, argTypes);
+            } else {
+                sqlRowSet = jdbcTemplate.queryForRowSet(batchSelectSql, args);
+            }
             SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
             int columnNum = metaData.getColumnCount();
             List<List<Object>> queryResultData = getQueryResultData(sqlRowSet, columnNum);
@@ -81,7 +86,12 @@ public class JdbcTemplateUtils {
         String sql = sqlQueryParam.getSql();
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, args, argTypes);
+        SqlRowSet sqlRowSet;
+        if (argTypes != null) {
+            sqlRowSet = jdbcTemplate.queryForRowSet(sql, args, argTypes);
+        } else {
+            sqlRowSet = jdbcTemplate.queryForRowSet(sql, args);
+        }
         SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
         int columnNum = metaData.getColumnCount();
         return getQueryResultData(sqlRowSet, columnNum);
@@ -93,7 +103,12 @@ public class JdbcTemplateUtils {
         int[] argTypes = sqlQueryParam.getArgTypes();
         String selectLabelSql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, 0L);
         log.debug("select label sql: {}", selectLabelSql);
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(selectLabelSql, args, argTypes);
+        SqlRowSet sqlRowSet;
+        if (argTypes != null) {
+            sqlRowSet = jdbcTemplate.queryForRowSet(selectLabelSql, args, argTypes);
+        } else {
+            sqlRowSet = jdbcTemplate.queryForRowSet(selectLabelSql, args);
+        }
         SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
         return getQueryLabelsByMetaData(metaData);
     }
@@ -114,7 +129,12 @@ public class JdbcTemplateUtils {
         int[] argTypes = sqlQueryParam.getArgTypes();
         String selectCountSql = MysqlUtils.wrapperQueryToSelectCount(sql);
         log.info("select count sql: {}", selectCountSql);
-        Map<String, Object> selectCountResult = jdbcTemplate.queryForMap(selectCountSql, args, argTypes);
+        Map<String, Object> selectCountResult;
+        if (argTypes != null) {
+            selectCountResult = jdbcTemplate.queryForMap(selectCountSql, args, argTypes);
+        } else {
+            selectCountResult = jdbcTemplate.queryForMap(selectCountSql, args);
+        }
         return Long.valueOf(selectCountResult.get("count").toString());
     }
 
