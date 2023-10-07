@@ -1,7 +1,6 @@
 package com.taogen.datahandling.facade;
 
 import com.taogen.commons.datatypes.string.StringUtils;
-import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
@@ -14,6 +13,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,11 +84,12 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         return groupIds;
     }
 
-    @Test
+    @ParameterizedTest
     @Disabled
-    void findGroupNames() {
-        String keywords = "Apple、Orange";
-        String delimiter = "、";
+    @CsvSource({
+            "AA、BB, 、",
+    })
+    void findGroupNames(String keywords, String delimiter) {
         String[] keywordArray = keywords.split(delimiter);
         List<Map<String, Object>> resultList = new ArrayList<>();
         for (String groupName : keywordArray) {
@@ -178,11 +180,16 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         log.info("Elapsed time: {} ms", System.currentTimeMillis() - startTime);
     }
 
-    @Test
-    void exportFromAllTableSeparateExcelByGroup() throws IOException {
+    @ParameterizedTest
+    // delimiter '|' need to add a backslash '\\|'
+    @CsvSource({
+            "1|2|3, AA|BB|CC, \\|"
+    })
+    void exportFromAllTableSeparateExcelByGroup(
+            String groupIdsStr, String keywords, String delimiter) throws IOException {
         long startTime = System.currentTimeMillis();
         List<String> tableList = getTableList();
-        List<Integer> groupIds = Arrays.asList(80);
+        List<Integer> groupIds = Arrays.stream(groupIdsStr.split("\\|")).map(Integer::valueOf).collect(Collectors.toList());
         // 是否隐藏为开启的所有分组（不含admin）。30个关键词导出耗时：15.2 min。60个关键词耗时：27 min。
 //        List<Integer> groupIds = Arrays.asList(18, 19, 42, 56, 80, 84, 103, 126, 136, 157, 175, 178, 181, 195, 199, 200, 201, 214, 226, 234, 238, 241, 264, 273, 274, 275, 276, 277, 278, 279, 290);
 //        List<Integer> groupIds = Arrays.asList(238);
@@ -203,8 +210,6 @@ public class RecoveryDataExportTest extends ExportBaseTest {
 //                "left join recovery_group rg on rg.id = rd.group_id \n" +
 //                "left join recovery_site rs on rs.id = rd.site_id\n" +
 //                "where group_id in (${group_id}) and (${keyword_predicate})";
-        String keywords = "张三、李四";
-        String delimiter = "、"; // '|' need to add a backslash '\\|'
         String newDelimiter = "---";
         keywords = textModifier.updateDelimiter(keywords, delimiter, newDelimiter);
         delimiter = newDelimiter;
