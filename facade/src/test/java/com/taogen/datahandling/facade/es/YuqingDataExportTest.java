@@ -10,11 +10,14 @@ import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -47,6 +50,8 @@ import static com.taogen.datahandling.facade.es.EsFieldInfo.*;
 @Slf4j
 @Disabled
 class YuqingDataExportTest {
+    public static final List<EsFieldInfo> BASIC_QUERY_FIELDS = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+
     @Autowired(required = true)
     private EsReader esReader;
     @Autowired(required = true)
@@ -100,36 +105,50 @@ class YuqingDataExportTest {
     }
 
     @Test
-    void count() throws ParseException {
-        String startDate = "2023-09-20";
-        String endDate = "2023-09-22";
-        String keywordExpression = "A+(B|C)";
-        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
+    void buildDslForCount() {
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                .query(new BoolQuerySemanticBuilder()
+                        .nonJunkData()
+                        .deduplicate()
+                        .userFilter("3643")
+                        .dep("1004,1005")
+                        .build());
+        log.debug("searchSourceBuilder: {}", searchSourceBuilder);
+        // count: query conditions
+//        String keywordExpression = "(潍城|于河镇|潍坊|望留街)+(村支书|村干部|妇女主任|不雅视频|真人秀|班子成员交流)";
+//        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
 //                {DEP, new Object[]{"1", "2"}},
 //                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
 //                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
 //                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
 //                {HOST_NAME, new Object[]{"bing.com"}},
 //                {AUTHOR, new Object[]{"Zhangsan"}},
-        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
-        String dsl = DslBuilder.buildForCount(queryConditions,
-                keywordExpression);
-        log.debug("dsl: {}", dsl);
-        DslQueryParam dslQueryParam = new DslQueryParam();
-        List<String> indexNames = getIndexNames(startDate, endDate);
-        log.debug("indexNames: {}", indexNames);
-        dslQueryParam.setIndex(indexNames);
-        dslQueryParam.setDsl(dsl);
-        long count = esReader.count(restClient, dslQueryParam);
-        log.debug("count: {}", count);
+//        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
+//        String dsl = DslBuilder.buildForCount(queryConditions,
+//                keywordExpression);
+//        String dsl = "{\"query\":{\"bool\":{\"must_not\":[{\"term\":{\"retweeted_status\":\"1\"}}],\"must\":[{\"term\":{\"status\":\"0\"}},{\"range\":{\"pub_time\":{\"lt\":\"2023-11-01 23:59:59\",\"gt\":\"2023-10-15 00:00:00\"}}},{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"班子成员交流\"}},{\"match_phrase\":{\"content\":\"班子成员交流\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"真人秀\"}},{\"match_phrase\":{\"content\":\"真人秀\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"不雅视频\"}},{\"match_phrase\":{\"content\":\"不雅视频\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"妇女主任\"}},{\"match_phrase\":{\"content\":\"妇女主任\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"村干部\"}},{\"match_phrase\":{\"content\":\"村干部\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"村支书\"}},{\"match_phrase\":{\"content\":\"村支书\"}}],\"minimum_should_match\":1}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"望留街\"}},{\"match_phrase\":{\"content\":\"望留街\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"潍坊\"}},{\"match_phrase\":{\"content\":\"潍坊\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"于河镇\"}},{\"match_phrase\":{\"content\":\"于河镇\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"潍城\"}},{\"match_phrase\":{\"content\":\"潍城\"}}],\"minimum_should_match\":1}}],\"minimum_should_match\":1}}]}},{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"term\":{\"source_id\":\"5\"}},{\"term\":{\"is_reply\":\"1\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"source_id\":\"6\"}},{\"term\":{\"is_reply\":\"1\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"retweeted_status\":\"2\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"real_source_id\":\"20\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"real_source_id\":\"10\"}}]}}]}}]}}}";
     }
 
     @Test
-    void exportDataToExcel() throws IOException, ParseException, ExecutionException, InterruptedException {
-//        String startDate = "2023-09-01";
-//        String endDate = "2023-09-01";
+    void buildDslForSearch() {
+        // search/scroll search: columns, query conditions, size, order
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
+                .fetchSource(BASIC_QUERY_FIELDS.stream().map(EsFieldInfo::getQueryField).distinct().toArray(String[]::new), null)
+                .query(new BoolQuerySemanticBuilder()
+                        .nonJunkData()
+                        .deduplicate()
+                        .userFilter("3643")
+                        .dep("1004,1005")
+                        .build())
+                .size(50)
+                .sort(EsField.PUB_TIME, SortOrder.DESC);
+        log.debug("searchSourceBuilder: {}", searchSourceBuilder);
+
+//        String startDate = "2023-10-15";
+//        String endDate = "2023-11-01";
 //        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME, IP_REGION, SOURCE_NAME, CHECK_IN_AREA, LEVEL_NAME);
-////        List<EsField> queryFields = Arrays.asList(ID, PUB_TIME);
+//        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+//        List<EsField> queryFields = Arrays.asList(ID, PUB_TIME);
 //        String dsl = "{\n" +
 //                "    \"query\": {\n" +
 //                "        \"bool\": {\n" +
@@ -139,6 +158,7 @@ class YuqingDataExportTest {
 //                "        }\n" +
 //                "    }\n" +
 //                "}";
+//        String dsl = "{\"query\":{\"bool\":{\"must_not\":[{\"term\":{\"retweeted_status\":\"1\"}}],\"must\":[{\"range\":{\"pub_time\":{\"lt\":\"2023-11-01 23:59:59\",\"gt\":\"2023-10-15 00:00:00\"}}},{\"bool\":{\"must\":[{\"bool\":{\"should\":[{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"班子成员交流\"}},{\"match_phrase\":{\"content\":\"班子成员交流\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"真人秀\"}},{\"match_phrase\":{\"content\":\"真人秀\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"不雅视频\"}},{\"match_phrase\":{\"content\":\"不雅视频\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"妇女主任\"}},{\"match_phrase\":{\"content\":\"妇女主任\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"村干部\"}},{\"match_phrase\":{\"content\":\"村干部\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"村支书\"}},{\"match_phrase\":{\"content\":\"村支书\"}}],\"minimum_should_match\":1}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"望留街\"}},{\"match_phrase\":{\"content\":\"望留街\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"潍坊\"}},{\"match_phrase\":{\"content\":\"潍坊\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"于河镇\"}},{\"match_phrase\":{\"content\":\"于河镇\"}}],\"minimum_should_match\":1}},{\"bool\":{\"should\":[{\"match_phrase\":{\"title\":\"潍城\"}},{\"match_phrase\":{\"content\":\"潍城\"}}],\"minimum_should_match\":1}}],\"minimum_should_match\":1}}]}},{\"bool\":{\"must_not\":[{\"bool\":{\"must\":[{\"term\":{\"source_id\":\"5\"}},{\"term\":{\"is_reply\":\"1\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"source_id\":\"6\"}},{\"term\":{\"is_reply\":\"1\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"retweeted_status\":\"2\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"real_source_id\":\"20\"}}]}},{\"bool\":{\"must\":[{\"term\":{\"real_source_id\":\"10\"}}]}}]}}]}}}";
 //        JSONObject jsonObject = new JSONObject(dsl);
 //        jsonObject.put("size", 50);
 //        jsonObject.put("sort", Collections.singletonList(Collections.singletonMap(
@@ -146,29 +166,57 @@ class YuqingDataExportTest {
 //        jsonObject.put("_source", queryFields.stream().map(EsFieldInfo::getQueryField).distinct().collect(Collectors.toList()));
 //        dsl = jsonObject.toString();
 
-        String startDate = "2023-09-01";
-        String endDate = "2023-09-01";
-
-        Integer size = 50;
+//        String startDate = "2023-10-15";
+//        String endDate = "2023-11-01";
+//        String startDate = "2023-09-08";
+//        String endDate = "2023-09-08";
+//        Integer size = 50;
         // exporting all fields
 //        List<EsFieldInfo> queryFields = Arrays.asList(EsFieldInfo.values());
         // basic fields
-        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
-        String keywordExpression = "A+(B+C)";
-        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
+//        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+//        String keywordExpression = "(潍城|于河镇|潍坊|望留街)+(村支书|村干部|妇女主任|不雅视频|真人秀|班子成员交流)";
+//        Map<EsFieldInfo, Object[]> queryConditions = Stream.of(new Object[][]{
 //                {DEP, new Object[]{"1", "2"}},
 //                {SOURCE_NAME, new Object[]{SourceType.NEWS.getSourceId(), SourceType.VIDEO.getSourceId()}},
 //                {PUB_TIME, new Object[]{"2023-09-01 00:10:00", "2023-09-01 00:11:00"}},
 //                {LEVEL_NAME, new Object[]{SensitiveType.SENSITIVE.getLevelId()}},
 //                {HOST_NAME, new Object[]{"baidu.com"}},
 //                {AUTHOR, new Object[]{"zhangsan"}},
-        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
-        String dsl = DslBuilder.buildForSearch(queryFields, queryConditions,
-                keywordExpression, size, EsField.PUB_TIME, SortOrder.DESC);
-        log.debug("dsl: {}", dsl);
+//        }).collect(Collectors.toMap(data -> (EsFieldInfo) data[0], data -> (Object[]) data[1]));
+//        String dsl = DslBuilder.buildForSearch(queryFields, queryConditions,
+//                keywordExpression, size, EsField.PUB_TIME, SortOrder.DESC);
 
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2023-11-02, 2023-11-02, yyyy-MM-dd"
+    })
+    void count(String startTime, String endTime, String format) throws ParseException {
+        String dsl = "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"status\":{\"value\":\"0\",\"boost\":1.0}}},{\"term\":{\"is_original\":{\"value\":\"1\",\"boost\":1.0}}},{\"terms\":{\"dep\":[\"1004\",\"1005\"],\"boost\":1.0}}],\"must_not\":[{\"term\":{\"user_tag\":{\"value\":\"u_3643\",\"boost\":1.0}}}],\"adjust_pure_negative\":true,\"boost\":1.0}}}";
+        // start to query data
+        log.debug("dsl: {}", dsl);
         DslQueryParam dslQueryParam = new DslQueryParam();
-        List<String> indexNames = getIndexNames(startDate, endDate);
+        List<String> indexNames = getIndexNames(startTime, endTime, format);
+        log.debug("indexNames: {}", indexNames);
+        dslQueryParam.setIndex(indexNames);
+        dslQueryParam.setDsl(dsl);
+        long count = esReader.count(restClient, dslQueryParam);
+        log.debug("count: {}", count);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2023-11-02, 2023-11-02, yyyy-MM-dd"
+    })
+    void exportDataToExcel(String startTime, String endTime, String format) throws IOException, ParseException, ExecutionException, InterruptedException {
+        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+        String dsl = "";
+        // start to query data
+        log.debug("dsl: {}", dsl);
+        DslQueryParam dslQueryParam = new DslQueryParam();
+        List<String> indexNames = getIndexNames(startTime, endTime, format);
         Collections.reverse(indexNames);
         log.debug("indexNames: {}", indexNames);
         dslQueryParam.setIndex(indexNames);
@@ -309,8 +357,8 @@ class YuqingDataExportTest {
         return jsonObjectList;
     }
 
-    private List<String> getIndexNames(String startDate, String endDate) throws ParseException {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private List<String> getIndexNames(String startDate, String endDate, String format) throws ParseException {
+        DateFormat dateFormat = new SimpleDateFormat(format);
         List<String> dates = DateRangeUtils.getDateStringsBetweenDates(
                 dateFormat.parse(startDate), dateFormat.parse(endDate), "yyyyMMdd");
         if (CollectionUtils.isEmpty(dates)) {

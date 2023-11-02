@@ -61,4 +61,5 @@ public class EsField {
     public static final String MEDIA_NAME = "media_name";
     public static final String MEDIA_LOCATION_TYPE = "media_location_type";
     public static final String AUTHOR_ID = "author_id";
+    public static final String REMARK1 = "remark1";
 }

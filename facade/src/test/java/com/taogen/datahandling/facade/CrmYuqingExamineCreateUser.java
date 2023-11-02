@@ -190,7 +190,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void updateAndAppendExamineUse() throws IOException {
-        String inputFilePath = "D:\\My Desktop\\通州.xlsx";
+        String inputFilePath = getExportDirPath() + File.separator + "通州.xlsx";
         Integer userNameColNum = 1;
         Integer appendUseCountCol = 3;
         Integer appendUseCharNumCol = 4;
