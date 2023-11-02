@@ -211,7 +211,7 @@ class YuqingDataExportTest {
             "2023-11-02, 2023-11-02, yyyy-MM-dd"
     })
     void exportDataToExcel(String startTime, String endTime, String format) throws IOException, ParseException, ExecutionException, InterruptedException {
-        List<EsFieldInfo> queryFields = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+        List<EsFieldInfo> queryFields = BASIC_QUERY_FIELDS;
         String dsl = "";
         // start to query data
         log.debug("dsl: {}", dsl);
