@@ -10,10 +10,13 @@ import org.apache.poi.ss.usermodel.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -187,9 +190,10 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
 //        getInsertCustomerBatchSql(insertNames, provinceCode, cityCode, countyCode, sustainUserId, saleUserId);
     }
 
-    @Test
+    @ParameterizedTest
     @Disabled
-    void updateAndAppendExamineUse() throws IOException {
+    @CsvSource("2023-11-01 00:00:00, 2023-11-31 23:59:59")
+    void updateAndAppendExamineUse(String startTime, String endTime) throws IOException {
         String inputFilePath = getExportDirPath() + File.separator + "通州.xlsx";
         Integer userNameColNum = 1;
         Integer appendUseCountCol = 3;
@@ -205,7 +209,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
                     "from examine.examine_deposit_record as deposit \n" +
                     "right join examine.sys_user as user on deposit.create_by = user.user_id\n" +
                     "WHERE\n" +
-                    "deposit.create_time between '2023-08-01 00:00:00' and '2023-08-31 23:59:59' and \n" +
+                    "deposit.create_time between '" + startTime + "' and '" + endTime + "' and \n" +
                     "deposit.type in (1, 2, 5) and\n" +
                     "deposit.`length` < 0 and \n" +
                     "user.user_name = \"" + userName + "\"";
