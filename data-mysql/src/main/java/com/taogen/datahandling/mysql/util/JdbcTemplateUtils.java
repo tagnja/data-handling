@@ -1,5 +1,6 @@
 package com.taogen.datahandling.mysql.util;
 
+import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author taogen
@@ -17,41 +20,42 @@ import java.util.Map;
 @Slf4j
 @Component
 public class JdbcTemplateUtils {
+
+    public static final Pattern SELECT_ID_PATTERN = Pattern.compile("select.*\\s(\\w+[.])*id\\s*[,]*.*\\sfrom\\s", Pattern.CASE_INSENSITIVE);
+
+    public static final Pattern GROUP_BY_PATTERN = Pattern.compile("group\\s+by", Pattern.CASE_INSENSITIVE);
+
+    public static final Pattern ORDER_BY_PATTERN = Pattern.compile("order\\s+by", Pattern.CASE_INSENSITIVE);
+
+    public static final Pattern TABLE_ALIAS_PATTERN = Pattern.compile("from\\s+(\\w|[.])+\\s+(as\\s+)*(\\w+)", Pattern.CASE_INSENSITIVE);
+
+    private static void handleSqlQueryParam(SqlQueryParam sqlQueryParam) {
+        String sql = sqlQueryParam.getSql();
+        Matcher matcher = TABLE_ALIAS_PATTERN.matcher(sql);
+        if (matcher.find()) {
+            sqlQueryParam.setPrimaryKeyColumn(matcher.group(3) + "." + sqlQueryParam.getPrimaryKeyColumn());
+        }
+    }
+
     /**
      * set startId to fetch a page of data
      * Note: batch query sql must "order by id"
      *
      * @param sqlQueryParam
-     * @param count
      * @return
      */
     public List<List<Object>> getValueListBatch(JdbcTemplate jdbcTemplate,
-                                                SqlQueryParam sqlQueryParam,
-                                                Long count) {
+                                                SqlQueryParam sqlQueryParam
+    ) {
         String sql = sqlQueryParam.getSql();
+        checkSql(sql);
+        handleSqlQueryParam(sqlQueryParam);
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
-        Integer batchSize = sqlQueryParam.getBatchSize();
-        String selectFirstRowSql = MysqlUtils.wrapperQueryWithOrderByAndLimit(sql, sqlQueryParam.getPrimaryKeyColumn(), 1L);
-        log.debug("select first row sql: {}", selectFirstRowSql);
-        Map<String, Object> firstRow = jdbcTemplate.queryForMap(selectFirstRowSql, args, argTypes);
-        log.debug("first row: {}", firstRow);
-        Long firstRowId = Long.valueOf(firstRow.get(sqlQueryParam.getPrimaryKeyColumn()).toString());
-        Long startId = firstRowId - 1;
+        long startId = 0;
         List<List<Object>> resultValueList = new ArrayList<>();
-        int start = 0;
-        while (start < count) {
-            long size = batchSize > (count - start) ? (count - start) : batchSize;
-            String primaryKeyPredicate = new StringBuilder()
-                    .append(" ")
-                    .append(sqlQueryParam.getPrimaryKeyColumn())
-                    .append(" > ")
-                    .append(startId)
-                    .append(" order by ")
-                    .append(sqlQueryParam.getPrimaryKeyColumn())
-                    .toString();
-            String batchSelectSql = MysqlUtils.wrapperPredicateToSql(sql, primaryKeyPredicate);
-            batchSelectSql = MysqlUtils.wrapperQueryToSelectLimitSize(batchSelectSql, size);
+        while (true) {
+            String batchSelectSql = getBatchSelectSql(sqlQueryParam, startId);
             log.debug("batch select sql: {}", batchSelectSql);
             SqlRowSet sqlRowSet;
             if (argTypes != null) {
@@ -62,11 +66,50 @@ public class JdbcTemplateUtils {
             SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
             int columnNum = metaData.getColumnCount();
             List<List<Object>> queryResultData = getQueryResultData(sqlRowSet, columnNum);
+            if (CollectionUtils.isEmpty(queryResultData) ||
+                    (sqlQueryParam.getMaxSize() != null &&
+                            resultValueList.size() >= sqlQueryParam.getMaxSize())) {
+                break;
+            }
             resultValueList.addAll(queryResultData);
-            start += batchSize;
-            startId = Long.valueOf(queryResultData.get(queryResultData.size() - 1).get(0).toString());
+            startId = Long.valueOf(queryResultData.get(queryResultData.size() - 1).get(0).toString()) + 1;
+        }
+        if (sqlQueryParam.getMaxSize() != null && resultValueList.size() > sqlQueryParam.getMaxSize()) {
+            resultValueList = resultValueList.subList(0, sqlQueryParam.getMaxSize());
         }
         return resultValueList;
+    }
+
+    private void checkSql(String sql) {
+        Matcher selectIdMatcher = SELECT_ID_PATTERN.matcher(sql);
+        if (!selectIdMatcher.find()) {
+            throw new RuntimeException("Batch query sql must select id column");
+        }
+        Matcher groupByMatcher = GROUP_BY_PATTERN.matcher(sql);
+        if (groupByMatcher.find()) {
+            throw new RuntimeException("Batch query sql must not contain group by");
+        }
+        Matcher orderBymatcher = ORDER_BY_PATTERN.matcher(sql);
+        if (orderBymatcher.find()) {
+            throw new RuntimeException("Batch query sql must not contain order by. Batch fetch sql must order by primaryKeyColumn. Don't need to add order by clause.");
+        }
+    }
+
+    private String getBatchSelectSql(SqlQueryParam sqlQueryParam, long startId) {
+        String sql = sqlQueryParam.getSql();
+        sql = addStartIdToSql(sql, sqlQueryParam.getPrimaryKeyColumn(), startId);
+        sql = sql + " order by " + sqlQueryParam.getPrimaryKeyColumn() + " asc ";
+        sql = sql + " limit " + sqlQueryParam.getBatchSize();
+        return sql;
+    }
+
+    private String addStartIdToSql(String sql, String primaryKeyColumn, long startId) {
+        if (sql.toLowerCase().contains("where")) {
+            sql = sql.replace("where", "where " + primaryKeyColumn + " >= " + startId + " and ( ") + " ) ";
+        } else {
+            sql = sql + " where " + primaryKeyColumn + " >= " + startId;
+        }
+        return sql;
     }
 
     private List<List<Object>> getQueryResultData(SqlRowSet sqlRowSet, int columnNum) {
@@ -86,6 +129,9 @@ public class JdbcTemplateUtils {
         String sql = sqlQueryParam.getSql();
         Object[] args = sqlQueryParam.getArgs();
         int[] argTypes = sqlQueryParam.getArgTypes();
+        if (sqlQueryParam.getMaxSize() != null) {
+            sql = MysqlUtils.wrapperQueryToSelectLimitSize(sql, Long.valueOf(sqlQueryParam.getMaxSize()));
+        }
         SqlRowSet sqlRowSet;
         if (argTypes != null) {
             sqlRowSet = jdbcTemplate.queryForRowSet(sql, args, argTypes);

@@ -7,6 +7,10 @@ import lombok.Data;
  */
 @Data
 public class SqlQueryParam {
+    /**
+     * Batch fetch sql must order by primaryKeyColumn. Don't need to add order by clause.
+     * Batch fetch sql can't set group by clause.
+     */
     private String sql;
     private Object[] args;
     /**
@@ -20,6 +24,7 @@ public class SqlQueryParam {
 
     private Integer batchSize = 50;
 
+    private Integer maxSize = null;
     /**
      * TODO
      */
