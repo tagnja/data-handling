@@ -1,5 +1,6 @@
 package com.taogen.datahandling.mysql.service.impl;
 
+import com.taogen.commons.datatypes.string.StringUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.mysql.util.JdbcTemplateUtils;
@@ -24,6 +25,9 @@ public class MySQLReaderImpl implements MySQLReader {
 
     @Override
     public LabelAndData read(JdbcTemplate jdbcTemplate, SqlQueryParam sqlQueryParam) {
+        if (StringUtils.isBlank(sqlQueryParam.getSql())) {
+            throw new RuntimeException("sql cannot be null or empty");
+        }
         long fetchStartTime = System.currentTimeMillis();
         String sql = sqlQueryParam.getSql();
         log.info("sqlQueryParam sql is: {}", sql);
