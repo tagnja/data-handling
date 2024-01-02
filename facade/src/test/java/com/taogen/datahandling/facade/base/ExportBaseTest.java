@@ -4,6 +4,7 @@ import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.datahandling.facade.service.Sql2ExcelConverter;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelModifier;
+import com.taogen.datahandling.office.excel.service.service.ExcelReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import com.taogen.datahandling.text.service.TextModifier;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,9 @@ public class ExportBaseTest {
 
     @Autowired(required = true)
     protected ExcelWriter excelWriter;
+
+    @Autowired(required = true)
+    protected ExcelReader excelReader;
 
     protected void showConfig() {
         log.info("show config <<<");

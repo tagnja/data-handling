@@ -526,6 +526,14 @@ class KeywordBuilderTest {
     }
 
     @Test
+    void test() {
+        String keywordExpression = "-f-g)"; // equals (a+b+(d|e))-c-(f-g)
+        BoolQueryBuilder boolQueryBuilderByExpression = KeywordBuilder.getBoolQueryBuilderByExpression(keywordExpression);
+        System.out.println(boolQueryBuilderByExpression);
+
+    }
+
+    @Test
     void getBoolQueryBuilderByExpression_mix_2() {
         String keywordExpression = "(a+b-c)+(d|e)-(f-g)"; // equals (a+b+(d|e))-c-(f-g)
         BoolQueryBuilder boolQueryBuilderByExpression = KeywordBuilder.getBoolQueryBuilderByExpression(keywordExpression);

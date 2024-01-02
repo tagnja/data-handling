@@ -1,10 +1,12 @@
 package com.taogen.datahandling.facade;
 
 import com.taogen.commons.datatypes.string.StringUtils;
+import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -18,10 +20,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @Disabled
 public class RecoveryDataExportTest extends ExportBaseTest {
+
+    public static final Pattern PUSH_ERROR_WORDS_PATTERN = Pattern.compile(
+            "(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+(\\s*)(=+》)(\\s*)(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     @Test
     void splitModifyAndJoin_string_test1() {
@@ -84,6 +89,47 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         return groupIds;
     }
 
+
+
+    public static String replaceMatchGroups(String source, Pattern pattern, Map<Integer, String> groupToReplacement) {
+        Matcher matcher = pattern.matcher(source);
+        StringBuilder result = new StringBuilder(source);
+        int adjust = 0;
+        while (matcher.find()) {
+            for (Map.Entry<Integer, String> entry : groupToReplacement.entrySet()) {
+                int groupToReplace = entry.getKey();
+                String replacement = entry.getValue();
+//                System.out.println("match: " + matcher.group(groupToReplace));
+                int start = matcher.start(groupToReplace);
+                int end = matcher.end(groupToReplace);
+                result.replace(start + adjust, end + adjust, replacement);
+                adjust += replacement.length() - (end - start);
+            }
+        }
+        return result.toString();
+    }
+
+    @ParameterizedTest
+    @Disabled
+    @CsvSource({
+            "AA、BB, 、",
+    })
+    void findSiteNames(String keywords, String delimiter) {
+        String[] keywordArray = keywords.split(delimiter);
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (String siteName : keywordArray) {
+            log.info("site name: {}", siteName);
+            String sql = "select id, name from recovery_site where name like '%" + siteName + "%'";
+            log.debug("sql is {}", sql);
+            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+            resultList.addAll(result);
+            log.info("site name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        }
+        log.info("total sites: \n{}", resultList.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
+        log.info("site size is {}", resultList.size());
+        log.info("total site ids: {}", resultList.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
+    }
+
     @ParameterizedTest
     @Disabled
     @CsvSource({
@@ -110,6 +156,28 @@ public class RecoveryDataExportTest extends ExportBaseTest {
             log.info("group name is {}", item.get("name"));
             log.info("site name result: \n{}", siteResult.stream().map(i -> i.get("name")).map(Objects::toString).collect(Collectors.joining("\r\n")));
         });
+    }
+
+    @Test
+    void mergeExcelFiles() throws IOException, InvalidFormatException {
+
+        List<String> excelFiles = Arrays.asList(
+                getExportDirPath() + "/审核-数据-1702015205898_2023-12-08_14-00-06-697.xlsx",
+                getExportDirPath() + "/审核-数据-1702016653671_2023-12-08_14-24-14-760.xlsx",
+                getExportDirPath() + "/审核-数据-1702022294589_2023-12-08_15-58-16-217.xlsx",
+                getExportDirPath() + "/审核-数据-1702024246179_2023-12-08_16-30-47-358.xlsx"
+//                getExportDirPath() + "/merge-1702025807372.xlsx",
+//                getExportDirPath() + "/merge-1702025357842.xlsx"
+        );
+        System.out.println(excelFiles);
+        LabelAndData labelAndData = excelReader.read(excelFiles);
+        List<List<Object>> data = labelAndData.getValuesList();
+        log.debug("data size is {}", data.size());
+        LabelAndData.deduplicateData(data, 0, 8, "---");
+        log.debug("data size after deduplicate is {}", data.size());
+        String outputFilePath = getExportDirPath() + "/merge-" + System.currentTimeMillis() + ".xlsx";
+        log.debug("output file path is {}", outputFilePath);
+        excelWriter.writeLabelAndDataToExcel(labelAndData, outputFilePath);
     }
 
     @Test

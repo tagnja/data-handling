@@ -110,6 +110,8 @@ class YuqingDataExportTest {
                 .query(new BoolQuerySemanticBuilder()
                         .nonJunkData()
                         .deduplicate()
+                        .keywordExp("AA|BB|CC")
+                        .pubTimeRange("2023-01-01 00:00:00", "2023-11-09 23:59:59")
                         .userFilter("3643")
                         .dep("1004,1005")
                         .build());
