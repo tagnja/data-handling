@@ -248,6 +248,12 @@ public class BoolQuerySemanticBuilder {
         return this;
     }
 
+    public BoolQuerySemanticBuilder authorId(String authorId) {
+        // term: exact query
+        this.boolQueryBuilder.must(QueryBuilders.termQuery(EsField.AUTHOR_ID, authorId));
+        return this;
+    }
+
     /**
      * 有图
      * {"bool":{"should":[{"term":{"img_json":"https"}},{"term":{"img_json":"http"}}],"minimum_should_match":1}}

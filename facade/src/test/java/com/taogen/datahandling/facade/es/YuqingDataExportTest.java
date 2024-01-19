@@ -2,10 +2,11 @@ package com.taogen.datahandling.facade.es;
 
 import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.commons.datatypes.datetime.DateRangeUtils;
-import com.taogen.commons.io.DirectoryUtils;
+import com.taogen.commons.io.FileUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.service.EsReader;
 import com.taogen.datahandling.es.vo.DslQueryParam;
+import com.taogen.datahandling.facade.base.ExportBaseTest;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -49,8 +49,9 @@ import static com.taogen.datahandling.facade.es.EsFieldInfo.*;
 @SpringBootTest
 @Slf4j
 @Disabled
-class YuqingDataExportTest {
+class YuqingDataExportTest extends ExportBaseTest {
     public static final List<EsFieldInfo> BASIC_QUERY_FIELDS = Arrays.asList(TITLE, CONTENT, AUTHOR, PUB_TIME, SOURCE_URL, HOST_NAME);
+    public static final List<EsFieldInfo> QUERY_FIELDS = Arrays.asList(EsFieldInfo.values());
 
     @Autowired(required = true)
     private EsReader esReader;
@@ -241,13 +242,7 @@ class YuqingDataExportTest {
             log.warn("No data to export!");
             System.exit(0);
         }
-        String outputDir = DirectoryUtils.getUserHomeDir() + File.separator + "export";
-        String outputFileName = new StringBuilder()
-                .append("舆情-数据-")
-                .append(System.currentTimeMillis())
-                .append(".xlsx")
-                .toString();
-        String outputFilePath = outputDir + File.separator + outputFileName;
+        String outputFilePath = getExportDirPath() + FileUtils.appendDateTimeToFileName("舆情-数据.xlsx");
         log.debug("prepared to export data to excel...");
         log.debug("outputFilePath: {}", outputFilePath);
         excelWriter.writeLabelAndDataToExcel(labelAndData, outputFilePath);

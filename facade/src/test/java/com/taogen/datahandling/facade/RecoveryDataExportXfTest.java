@@ -250,7 +250,7 @@ public class RecoveryDataExportXfTest extends ExportBaseTest {
                 }
             }
         };
-        String outputFilePath = excelModifier.modifyRows("C:\\Users\\Taogen\\Desktop\\export\\审核-数据-1666339953293.xlsx", 0, rowsModifyConsumer);
+        String outputFilePath = excelModifier.modifyRows(getExportDirPath() + "审核-数据-1666339953293.xlsx", 0, rowsModifyConsumer);
         log.info(outputFilePath);
     }
 

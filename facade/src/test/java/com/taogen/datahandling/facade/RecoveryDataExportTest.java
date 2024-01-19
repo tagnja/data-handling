@@ -2,6 +2,7 @@ package com.taogen.datahandling.facade;
 
 import com.taogen.commons.datatypes.string.StringUtils;
 import com.taogen.commons.io.DirectoryUtils;
+import com.taogen.commons.io.FileUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
@@ -175,7 +176,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         log.debug("data size is {}", data.size());
         LabelAndData.deduplicateData(data, 0, 8, "---");
         log.debug("data size after deduplicate is {}", data.size());
-        String outputFilePath = getExportDirPath() + "/merge-" + System.currentTimeMillis() + ".xlsx";
+        String outputFilePath = getExportDirPath() + FileUtils.appendDateTimeToFileName("merge.xlsx");
         log.debug("output file path is {}", outputFilePath);
         excelWriter.writeLabelAndDataToExcel(labelAndData, outputFilePath);
     }
@@ -403,7 +404,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 }
             }
         };
-        String outputFilePath = excelModifier.modifyRows("C:\\Users\\Taogen\\Desktop\\export\\审核-数据-1665479829882.xlsx", 0, rowsModifyConsumer);
+        String outputFilePath = excelModifier.modifyRows(getExportDirPath() + "审核-数据-1665479829882.xlsx", 0, rowsModifyConsumer);
         log.info(outputFilePath);
     }
 

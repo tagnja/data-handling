@@ -63,8 +63,14 @@ public class ExportBaseTest {
     }
 
     protected String getExportDirPath() {
-        String outputDirPath = DirectoryUtils.getUserHomeDir() +
-                File.separator + "export";
+        String outputDirPath = new StringBuilder()
+                .append(DirectoryUtils.getUserHomeDir())
+                .append(File.separator)
+                .append("tmp")
+                .append(File.separator)
+                .append("export")
+                .append(File.separator)
+                .toString();
         File dir = new File(outputDirPath);
         if (!dir.exists() || !dir.isDirectory()) {
             dir.mkdirs();

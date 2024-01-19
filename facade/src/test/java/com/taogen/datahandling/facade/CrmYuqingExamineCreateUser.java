@@ -16,7 +16,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -144,7 +143,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
         String provinceCode = "320000";
         String cityCode = "321100";
         String countyCode = "321103";
-        String filePath = "C:\\Users\\Taogen\\Desktop\\镇江.xlsx";
+        String filePath = getExportDirPath() + "镇江.xlsx";
         Integer sheetNum = 0; // start from 0
         Integer startRow = 1; // start from 0
         Integer columnNum = 1; // start from 0
@@ -159,7 +158,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void appendCustomerId() throws IOException {
-        String inputFilePath = "C:\\Users\\Taogen\\Desktop\\镇江.xlsx";
+        String inputFilePath = getExportDirPath() + "镇江.xlsx";
         Integer customerNameColNum = 1;
         Integer appendCustomerIdColNum = 4;
         DataFormatter formatter = new DataFormatter();
@@ -194,7 +193,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Disabled
     @CsvSource("2023-11-01 00:00:00, 2023-11-31 23:59:59")
     void updateAndAppendExamineUse(String startTime, String endTime) throws IOException {
-        String inputFilePath = getExportDirPath() + File.separator + "通州.xlsx";
+        String inputFilePath = getExportDirPath() + "通州.xlsx";
         Integer userNameColNum = 1;
         Integer appendUseCountCol = 3;
         Integer appendUseCharNumCol = 4;
@@ -248,7 +247,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void updateAndAppendPassword() throws IOException {
-        String inputFilePath = "C:\\Users\\Taogen\\Desktop\\泰州高港_2023-03-02_16-47-09-652.xlsx";
+        String inputFilePath = getExportDirPath() + "泰州高港_2023-03-02_16-47-09-652.xlsx";
         Integer customerNameColNum = 1;
         Integer userNameColNum = 2;
         Integer appendCustomerIdColNum = 4;
@@ -282,7 +281,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void AddUserToYuqingAndExamine2() throws IOException {
-        String inputFilePath = "C:\\Users\\Taogen\\Desktop\\镇江_2023-03-10_14-20-13-655.xlsx";
+        String inputFilePath = getExportDirPath() + "镇江.xlsx";
         String endDate = "2023-06-30";
         Integer characterNum = 100000;
         Integer writingNum = 20;

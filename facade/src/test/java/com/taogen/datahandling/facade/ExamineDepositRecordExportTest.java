@@ -50,7 +50,7 @@ class ExamineDepositRecordExportTest extends ExportBaseTest {
         sqlQueryParam.setSql(sql);
         sqlQueryParam.setArgs(new Object[]{deptId, beginTime, endTime});
         LabelAndData labelAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
-        String outputPath = getExportDirPath() + File.separator + deptName + ".xlsx";
+        String outputPath = getExportDirPath() + FileUtils.appendDateTimeToFileName(deptName + ".xlsx");
         outputPath = FileUtils.appendDateTimeToFileName(outputPath);
         log.debug("outputPath is: {}", outputPath);
         excelWriter.writeLabelAndDataToExcel(labelAndData, outputPath);
