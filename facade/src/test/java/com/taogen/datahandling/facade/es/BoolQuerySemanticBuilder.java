@@ -243,6 +243,7 @@ public class BoolQuerySemanticBuilder {
      * @return
      */
     public BoolQuerySemanticBuilder author(String author) {
+        // term: exact query
         this.boolQueryBuilder.must(QueryBuilders.termQuery(EsField.AUTHOR, author));
         return this;
     }
