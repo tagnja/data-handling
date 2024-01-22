@@ -1,13 +1,10 @@
 package com.taogen.datahandling.facade;
 
 import com.taogen.commons.datatypes.string.StringUtils;
-import com.taogen.commons.io.DirectoryUtils;
-import com.taogen.commons.io.FileUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -24,11 +21,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Taogen
@@ -37,8 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Disabled
 public class RecoveryDataExportTest extends ExportBaseTest {
 
-    public static final Pattern PUSH_ERROR_WORDS_PATTERN = Pattern.compile(
-            "(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+(\\s*)(=+》)(\\s*)(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     @Test
     void splitModifyAndJoin_string_test1() {
@@ -48,121 +42,37 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         String handledText = textModifier.splitModifyAndJoin(s, delimiter, function, " or ");
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource({
+            "1|2|3, AA|BB, CC, |"
+    })
     @Disabled
-    void findGroupNamesByCheckStatusEnable() {
-        String sql = "select id, name from recovery_group where check_status = 0";
-        log.debug("sql is {}", sql);
-        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
-        log.info("group name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        log.info("total groups: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        log.info("group size is {}", result.size());
-        log.info("total group ids: {}", result.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
-        // result: 18,19,42,56,80,84,103,126,136,157,175,178,181,195,199,200,201,214,226,234,238,241,264,273,274,275,276,277,278,279,290
-    }
-
-    @Test
-    public void test_findGroupIds() {
-        List<Integer> allGroupIds = findGroupIds(null);
-        assertNotNull(allGroupIds);
-        assertFalse(allGroupIds.isEmpty());
-        // -1, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 74, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 93, 94, 96, 97, 99, 101, 103, 104, 105, 106, 108, 109, 111, 112, 113, 114, 116, 117, 118, 120, 122, 124, 125, 126, 127, 128, 130, 131, 132, 133, 134, 136, 137, 138, 139, 140, 141, 142, 145, 146, 148, 149, 150, 151, 153, 155, 157, 158, 160, 161, 163, 164, 167, 168, 169, 170, 172, 173, 175, 178, 180, 181, 182, 183, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 210, 211, 212, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 255, 256, 257, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314
-        log.debug(allGroupIds.toString());
-        log.info("group size: {}", allGroupIds.size());
-        List<Integer> groupIds = findGroupIds("check_status = 0");
-        assertNotNull(groupIds);
-        assertFalse(groupIds.isEmpty());
-    }
-
-    private List<Integer> findGroupIds(String predicate) {
-        StringBuilder sql = new StringBuilder()
-                .append("select id from recovery_group");
-        if (StringUtils.isNotEmpty(predicate)) {
-            sql.append(" where ").append(predicate);
-        }
-        sql.append(" order by id asc");
-        List<Integer> groupIds = jdbcTemplate.queryForList(sql.toString(), Integer.class);
-        return groupIds;
-    }
-
-
-
-    public static String replaceMatchGroups(String source, Pattern pattern, Map<Integer, String> groupToReplacement) {
-        Matcher matcher = pattern.matcher(source);
-        StringBuilder result = new StringBuilder(source);
-        int adjust = 0;
-        while (matcher.find()) {
-            for (Map.Entry<Integer, String> entry : groupToReplacement.entrySet()) {
-                int groupToReplace = entry.getKey();
-                String replacement = entry.getValue();
-//                System.out.println("match: " + matcher.group(groupToReplace));
-                int start = matcher.start(groupToReplace);
-                int end = matcher.end(groupToReplace);
-                result.replace(start + adjust, end + adjust, replacement);
-                adjust += replacement.length() - (end - start);
-            }
-        }
-        return result.toString();
-    }
-
-
-
-
-    @Test
-    void mergeExcelFiles() throws IOException, InvalidFormatException {
-
-        List<String> excelFiles = Arrays.asList(
-                getExportDirPath() + "/审核-数据-1702015205898_2023-12-08_14-00-06-697.xlsx",
-                getExportDirPath() + "/审核-数据-1702016653671_2023-12-08_14-24-14-760.xlsx",
-                getExportDirPath() + "/审核-数据-1702022294589_2023-12-08_15-58-16-217.xlsx",
-                getExportDirPath() + "/审核-数据-1702024246179_2023-12-08_16-30-47-358.xlsx"
-//                getExportDirPath() + "/merge-1702025807372.xlsx",
-//                getExportDirPath() + "/merge-1702025357842.xlsx"
-        );
-        System.out.println(excelFiles);
-        LabelAndData labelAndData = excelReader.read(excelFiles);
-        List<List<Object>> data = labelAndData.getValuesList();
-        log.debug("data size is {}", data.size());
-        LabelAndData.deduplicateData(data, 0, 8, "---");
-        log.debug("data size after deduplicate is {}", data.size());
-        String outputFilePath = getExportDirPath() + FileUtils.appendDateTimeToFileName("merge.xlsx");
-        log.debug("output file path is {}", outputFilePath);
-        excelWriter.writeLabelAndDataToExcel(labelAndData, outputFilePath);
-    }
-
-    @Test
-    void exportFromAllTableToSingleExcel() throws IOException {
+    void exportFromAllTableToSingleExcel(String groupIds, String keywords, String excludeKeyword, String delimiter) throws IOException {
         long startTime = System.currentTimeMillis();
-        List<String> tableList = getTableList();
-//        List<Integer> groupIds = Arrays.asList(18, 19, 42, 56, 80, 84, 103, 126, 136, 157, 175, 178, 181, 195, 199, 200, 201, 214, 226, 234, 238, 241, 264, 273, 274, 275, 276, 277, 278, 279, 290);
-        List<Integer> groupIds = Arrays.asList(80, 19);
+        if ("|".equals(delimiter)) {
+            delimiter = "\\|"; // '|' need to add backslash '\\|'
+        }
+        List<Integer> groupIdList = Arrays.stream(groupIds.split(delimiter)).map(Integer::parseInt).collect(Collectors.toList());
+        String newDelimiter = "---";
+        keywords = textModifier.updateDelimiter(keywords, delimiter, newDelimiter);
+        delimiter = newDelimiter;
 
-        // 没有 ID 和 入库时间
-        String sql = "select rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\"\n" +
+        // 有 ID
+        String sql = "select rd.id as \"ID\", rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\"\n" +
                 "from app_wzjc.${table_name} rd \n" +
                 "left join recovery_group rg on rg.id = rd.group_id \n" +
                 "left join recovery_site rs on rs.id = rd.site_id\n" +
                 "where group_id in (${group_id}) and (${keyword_predicate})";
-        // 有 ID 和 入库时间
-//        String sql = "select rd.id as \"ID\", rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.gmt_create as \"入库时间\" ,rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\", content_correct_words\n" +
-//                "from app_wzjc.${table_name} rd \n" +
-//                "left join recovery_group rg on rg.id = rd.group_id \n" +
-//                "left join recovery_site rs on rs.id = rd.site_id\n" +
-//                "where group_id in (${group_id}) and (${keyword_predicate})";
 //        String sql = "select rd.id as \"ID\", rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.gmt_create as \"入库时间\" ,rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\", content_correct_words\n" +
 //                "from app_wzjc.${table_name} rd \n" +
 //                "left join recovery_group rg on rg.id = rd.group_id \n" +
 //                "left join recovery_site rs on rs.id = rd.site_id\n" +
 //                "where group_id in (${group_id}) and (content_correct_words like '%\"level\":1%' or content_correct_words like '%\"level\":3%' or content_correct_words like '%\"level\":-3%')";
-        String keywords = "张三、李四";
-        String delimiter = "\\|"; // '|' need to add backslash '\\|'
-        String newDelimiter = "、";
-        keywords = textModifier.updateDelimiter(keywords, delimiter, newDelimiter);
-        delimiter = newDelimiter;
-        String keywordPredicate = getKeywordPredicate(keywords, delimiter);
+        String keywordPredicate = getKeywordPredicate(keywords, delimiter, excludeKeyword);
         sql = sql.replace("${keyword_predicate}", keywordPredicate);
         LabelAndData resultLabelAndData = new LabelAndData(new ArrayList<>(), new ArrayList<>());
-        for (Integer groupId : groupIds) {
+        List<String> tableList = getTableList();
+        for (Integer groupId : groupIdList) {
             Map<String, Object> groupMap = jdbcTemplate.queryForMap("select name from recovery_group where id = " + groupId);
             Object groupName = groupMap.get("name");
             String sqlAddGroup = sql.replace("${group_id}", groupId.toString());
@@ -171,7 +81,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 log.debug("queryTableSql is: {}", queryTableSql);
                 SqlQueryParam sqlQueryParam = new SqlQueryParam();
                 sqlQueryParam.setSql(queryTableSql);
-                sqlQueryParam.setBatchFetch(false);
+                sqlQueryParam.setBatchFetch(true);
                 LabelAndData tableLabelsAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
                 resultLabelAndData.setLabels(tableLabelsAndData.getLabels());
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
@@ -184,56 +94,43 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 .toString();
         String outputFilePath = excelWriter.writeLabelAndDataToExcel(resultLabelAndData,
                 getExportDirPath() + File.separator + outputFileName);
-        // 没有 ID 和 入库时间
-        int appendToColumn = 6;
-        int titleColumn = 0;
-        int contentColumn = 1;
-        // 有 ID 和 入库时间
-//        int appendToColumn = 8;
-//        int titleColumn = 1;
-//        int contentColumn = 2;
+        // 有 ID
+        int appendToColumn = 7;
+        int titleColumn = 1;
+        int contentColumn = 2;
         String resultOutputFilePath = generateAppendKeywordsExcel(
-                outputFilePath, keywords, delimiter, appendToColumn, titleColumn, contentColumn);
+                outputFilePath, keywords, delimiter,
+                appendToColumn, titleColumn, contentColumn, true);
         log.info("output file path: {}", resultOutputFilePath);
         log.info("Elapsed time: {} ms", System.currentTimeMillis() - startTime);
     }
 
     @ParameterizedTest
-    // delimiter '|' need to add a backslash '\\|'
     @CsvSource({
-            "1|2|3, AA|BB|CC, \\|"
+            "1|2|3, AA|BB|CC, CC, |"
     })
     void exportFromAllTableSeparateExcelByGroup(
-            String groupIdsStr, String keywords, String delimiter) throws IOException {
+            String groupIds, String keywords, String excludeKeyword, String delimiter) throws IOException {
         long startTime = System.currentTimeMillis();
-        List<String> tableList = getTableList();
-        List<Integer> groupIds = Arrays.stream(groupIdsStr.split("\\|")).map(Integer::valueOf).collect(Collectors.toList());
-        // 是否隐藏为开启的所有分组（不含admin）。30个关键词导出耗时：15.2 min。60个关键词耗时：27 min。
-//        List<Integer> groupIds = Arrays.asList(18, 19, 42, 56, 80, 84, 103, 126, 136, 157, 175, 178, 181, 195, 199, 200, 201, 214, 226, 234, 238, 241, 264, 273, 274, 275, 276, 277, 278, 279, 290);
-//        List<Integer> groupIds = Arrays.asList(238);
-//        List<Integer> groupIds = findGroupIds(null);
-//        groupIds.removeIf(item -> item.equals(-1));
-        log.info("export groupIds size: {}", groupIds.size());
+        if ("|".equals(delimiter)) {
+            delimiter = "\\|"; // '|' need to add backslash '\\|'
+        }
+        List<Integer> groupIdList = Arrays.stream(groupIds.split(delimiter)).map(Integer::parseInt).collect(Collectors.toList());
+        String newDelimiter = "---";
+        keywords = textModifier.updateDelimiter(keywords, delimiter, newDelimiter);
+        delimiter = newDelimiter;
 
-        // 没有 ID 和 入库时间
-        String sql = "select rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\"\n" +
+        // 有 ID
+        String sql = "select rd.id as \"ID\", rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\"\n" +
                 "from app_wzjc.${table_name} rd \n" +
                 "left join recovery_group rg on rg.id = rd.group_id \n" +
                 "left join recovery_site rs on rs.id = rd.site_id\n" +
                 "where group_id in (${group_id}) and (${keyword_predicate})";
-//        sql += "and rd.pubtime between '2022-10-01 00:00:00' and '2023-01-06 23:59:59'";
-        // 有 ID 和 入库时间
-//        String sql = "select rd.id as \"ID\", rd.title as \"标题\", rd.content as \"内容\", rd.pubtime as \"发布时间\", rd.gmt_create as \"入库时间\" ,rd.url as \"链接\", rg.name as \"客户组\", rs.name as \"站点名称\"\n" +
-//                "from app_wzjc.${table_name} rd \n" +
-//                "left join recovery_group rg on rg.id = rd.group_id \n" +
-//                "left join recovery_site rs on rs.id = rd.site_id\n" +
-//                "where group_id in (${group_id}) and (${keyword_predicate})";
-        String newDelimiter = "---";
-        keywords = textModifier.updateDelimiter(keywords, delimiter, newDelimiter);
-        delimiter = newDelimiter;
-        String keywordPredicate = getKeywordPredicate(keywords, delimiter);
+//        sql += " and rd.pubtime between '2023-01-01 00:00:00' and '2023-11-14 23:59:59'";
+        String keywordPredicate = getKeywordPredicate(keywords, delimiter, excludeKeyword);
         sql = sql.replace("${keyword_predicate}", keywordPredicate);
-        for (Integer groupId : groupIds) {
+        List<String> tableList = getTableList();
+        for (Integer groupId : groupIdList) {
             Map<String, Object> groupMap = jdbcTemplate.queryForMap("select name from recovery_group where id = " + groupId);
             Object groupName = groupMap.get("name");
             String sqlAddGroup = sql.replace("${group_id}", groupId.toString());
@@ -243,7 +140,7 @@ public class RecoveryDataExportTest extends ExportBaseTest {
                 log.info("queryTableSql is: {}", queryTableSql);
                 SqlQueryParam sqlQueryParam = new SqlQueryParam();
                 sqlQueryParam.setSql(queryTableSql);
-                sqlQueryParam.setBatchFetch(false);
+                sqlQueryParam.setBatchFetch(true);
                 LabelAndData tableLabelsAndData = mysqlReader.read(jdbcTemplate, sqlQueryParam);
                 resultLabelAndData.setLabels(tableLabelsAndData.getLabels());
                 resultLabelAndData.getValuesList().addAll(tableLabelsAndData.getValuesList());
@@ -261,18 +158,16 @@ public class RecoveryDataExportTest extends ExportBaseTest {
             String outputFilePath = excelWriter.writeLabelAndDataToExcel(resultLabelAndData,
                     getExportDirPath() + File.separator + outputFileName);
             System.out.println("output file path: " + outputFilePath);
-            // 没有 ID 和 入库时间
-            int appendToColumn = 6;
-            int titleColumn = 0;
-            int contentColumn = 1;
             // 有 ID 和 入库时间
-//            int appendToColumn = 8;
-//            int titleColumn = 1;
-//            int contentColumn = 2;
+            int appendToColumn = 7;
+            int titleColumn = 1;
+            int contentColumn = 2;
 
             // 是否标注关键词
+//            keywords = addLowerOrUpperCaseKeywords(keywords, newDelimiter);
             String resultOutputFilePath = generateAppendKeywordsExcel(
-                    outputFilePath, keywords, delimiter, appendToColumn, titleColumn, contentColumn);
+                    outputFilePath, keywords, newDelimiter,
+                    appendToColumn, titleColumn, contentColumn, true);
             log.info("Elapsed time: {} ms", System.currentTimeMillis() - startTime);
         }
     }
@@ -299,33 +194,15 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         return tableNameList;
     }
 
-    private String generateAppendKeywordsExcel(String inputFilePath,
-                                               String keywords,
-                                               String delimiter,
-                                               int appendToColumn,
-                                               int titleColumn,
-                                               int contentColumn) throws IOException {
-        // start to call modifyWorkbook
-        List<String> names = Arrays.stream(keywords.split(delimiter))
-                .map(String::trim)
-                .collect(Collectors.toList());
-        DataFormatter formatter = new DataFormatter();
-        Consumer<Row> rowsModifyConsumer = row -> {
-            Cell titleCell = row.getCell(titleColumn);
-            String title = formatter.formatCellValue(titleCell);
-            log.trace("title: " + title);
-            Cell contentCell = row.getCell(contentColumn);
-            String content = formatter.formatCellValue(contentCell);
-            log.trace("content: " + content);
-            List<String> containsKeywords = names.stream()
-                    .filter(item -> title.contains(item) || content.contains(item))
-                    .collect(Collectors.toList());
-            log.trace("keywords: " + containsKeywords);
-            Cell cell = row.createCell(appendToColumn);
-            cell.setCellValue(String.join(delimiter, containsKeywords));
-        };
-        String outputFilePath = excelModifier.modifyRows(inputFilePath, 0, rowsModifyConsumer);
-        return outputFilePath;
+    private String addLowerOrUpperCaseKeywords(String keywords, String delimiter) {
+        String[] keywordArray = keywords.split(delimiter);
+        Set<String> keywordSet = new HashSet<>();
+        Arrays.stream(keywordArray).forEach(item -> {
+            keywordSet.add(item);
+            keywordSet.add(item.toLowerCase());
+            keywordSet.add(item.toUpperCase());
+        });
+        return String.join(delimiter, keywordSet);
     }
 
     @Test
@@ -404,9 +281,53 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         return result;
     }
 
-    private String getKeywordPredicate(String keywords, String delimiter) {
-        Function<String, String> function = item -> String.format("title like \"%%%s%%\" or content like \"%%%s%%\"", item, item);
-//        Function<String, String> function = item -> String.format("(title like \"%%%s%%\" and title not like \"%%党的%s%%\") or (content like \"%%%s%%\" and content not like \"%%党的%s%%\")", item, item, item, item);
-        return textModifier.splitModifyAndJoin(keywords, delimiter, function, " or ");
+    private String generateAppendKeywordsExcel(String inputFilePath,
+                                               String keywords,
+                                               String delimiter,
+                                               int appendToColumn,
+                                               int titleColumn,
+                                               int contentColumn,
+                                               boolean ignoreCase) throws IOException {
+        // start to call modifyWorkbook
+        List<String> names = Arrays.stream(keywords.split(delimiter))
+                .map(String::trim)
+                .collect(Collectors.toList());
+        DataFormatter formatter = new DataFormatter();
+        Consumer<Row> rowsModifyConsumer = row -> {
+            Cell titleCell = row.getCell(titleColumn);
+            String title = formatter.formatCellValue(titleCell);
+            log.trace("title: " + title);
+            Cell contentCell = row.getCell(contentColumn);
+            String content = formatter.formatCellValue(contentCell);
+            log.trace("content: " + content);
+            List<String> containsKeywords = names.stream()
+                    .filter(item -> {
+                        Pattern pattern = null;
+                        if (ignoreCase) {
+                            pattern = Pattern.compile(item, Pattern.CASE_INSENSITIVE);
+                        } else {
+                            pattern = Pattern.compile(item);
+                        }
+                        return pattern.matcher(title).find() || pattern.matcher(content).find();
+                    })
+                    .collect(Collectors.toList());
+            log.trace("keywords: " + containsKeywords);
+            Cell cell = row.createCell(appendToColumn);
+            cell.setCellValue(String.join(delimiter, containsKeywords));
+        };
+        String outputFilePath = excelModifier.modifyRows(inputFilePath, 0, rowsModifyConsumer);
+        return outputFilePath;
     }
+
+    private String getKeywordPredicate(String keywords, String delimiter, String excludeKeyword) {
+        Function<String, String> function = item -> String.format("title like \'%%%s%%\' or content like \'%%%s%%\'", item, item);
+        if (StringUtils.isNotBlank(excludeKeyword)) {
+            function = item -> String.format("(title like \"%%%s%%\" and title not like \"%%" + excludeKeyword + "%%\") or (content like \"%%%s%%\" and content not like \"%%" + excludeKeyword + "%%\")", item, item, item, item);
+        }
+        String result = textModifier.splitModifyAndJoin(keywords, delimiter, function, " or ");
+//        result += String.format(" or (title like \"%%%s%%\" and title not like \"%%学习贯彻%s%%\") or (content like \"%%%s%%\" and content not like \"%%学习贯彻%s%%\")", "习近平新时代中国特色社会主义思想主题教育", "习近平新时代中国特色社会主义思想主题教育", "习近平新时代中国特色社会主义思想主题教育", "习近平新时代中国特色社会主义思想主题教育");
+        return result;
+    }
+
+
 }
