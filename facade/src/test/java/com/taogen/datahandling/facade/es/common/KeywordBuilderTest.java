@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade.es;
+package com.taogen.datahandling.facade.es.common;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.junit.jupiter.api.Test;

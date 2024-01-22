@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade.es;
+package com.taogen.datahandling.facade.es.common;
 
 import com.taogen.commons.collection.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;

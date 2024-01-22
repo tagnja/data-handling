@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade.es;
+package com.taogen.datahandling.facade.es.common;
 
 import java.util.Arrays;
 import java.util.Optional;

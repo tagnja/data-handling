@@ -7,6 +7,7 @@ import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.es.service.EsReader;
 import com.taogen.datahandling.es.vo.DslQueryParam;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
+import com.taogen.datahandling.facade.es.common.*;
 import com.taogen.datahandling.mysql.service.MySQLReader;
 import com.taogen.datahandling.office.excel.service.service.ExcelWriter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.taogen.datahandling.facade.es.EsFieldInfo.*;
+import static com.taogen.datahandling.facade.es.common.EsFieldInfo.*;
 
 /**
  * @author taogen
@@ -142,6 +143,8 @@ class YuqingDataExportTest extends ExportBaseTest {
                         .deduplicate()
                         .userFilter("3643")
                         .dep("1004,1005")
+                        .author("xxx")
+                        .authorId("xxx")
                         .build())
                 .size(50)
                 .sort(EsField.PUB_TIME, SortOrder.DESC);

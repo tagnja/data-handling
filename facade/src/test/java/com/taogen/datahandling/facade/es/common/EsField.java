@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade.es;
+package com.taogen.datahandling.facade.es.common;
 
 /**
  * @author Taogen
