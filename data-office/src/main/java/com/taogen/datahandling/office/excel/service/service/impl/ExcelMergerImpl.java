@@ -33,6 +33,7 @@ public class ExcelMergerImpl implements ExcelMerger {
         List<List<Object>> data = labelAndData.getValuesList();
         log.debug("data size is {}", data.size());
         if (duplicate) {
+            // TODO
             LabelAndData.deduplicateData(data, 0, 8, "---");
             log.debug("data size after deduplicate is {}", data.size());
         }
