@@ -48,11 +48,6 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         String handledText = textModifier.splitModifyAndJoin(s, delimiter, function, " or ");
     }
 
-    public static void main(String[] args) {
-        Pattern pattern = Pattern.compile("qm", Pattern.CASE_INSENSITIVE);
-        System.out.println(pattern.matcher("1Qm1").find());
-    }
-
     @Test
     @Disabled
     void findGroupNamesByCheckStatusEnable() {
@@ -110,54 +105,8 @@ public class RecoveryDataExportTest extends ExportBaseTest {
         return result.toString();
     }
 
-    @ParameterizedTest
-    @Disabled
-    @CsvSource({
-            "AA、BB, 、",
-    })
-    void findSiteNames(String keywords, String delimiter) {
-        String[] keywordArray = keywords.split(delimiter);
-        List<Map<String, Object>> resultList = new ArrayList<>();
-        for (String siteName : keywordArray) {
-            log.info("site name: {}", siteName);
-            String sql = "select id, name from recovery_site where name like '%" + siteName + "%'";
-            log.debug("sql is {}", sql);
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
-            resultList.addAll(result);
-            log.info("site name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        }
-        log.info("total sites: \n{}", resultList.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        log.info("site size is {}", resultList.size());
-        log.info("total site ids: {}", resultList.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
-    }
 
-    @ParameterizedTest
-    @Disabled
-    @CsvSource({
-            "AA、BB, 、",
-    })
-    void findGroupNames(String keywords, String delimiter) {
-        String[] keywordArray = keywords.split(delimiter);
-        List<Map<String, Object>> resultList = new ArrayList<>();
-        for (String groupName : keywordArray) {
-            log.info("group name: {}", groupName);
-            String sql = "select id, name from recovery_group where name like '%" + groupName + "%'";
-            log.debug("sql is {}", sql);
-            List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
-            resultList.addAll(result);
-            log.info("group name result: \n{}", result.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        }
-        log.info("total groups: \n{}", resultList.stream().map(Objects::toString).collect(Collectors.joining("\r\n")));
-        log.info("group size is {}", resultList.size());
-        log.info("total group ids: {}", resultList.stream().map(item -> item.get("id")).map(Objects::toString).collect(Collectors.joining(",")));
-        resultList.forEach(item -> {
-            Object groupId = item.get("id");
-            String selectSiteSql = "select b.id, b.name from recovery_site_group as a left join recovery_site as b on a.site_id = b.id where group_id = " + groupId;
-            List<Map<String, Object>> siteResult = jdbcTemplate.queryForList(selectSiteSql);
-            log.info("group name is {}", item.get("name"));
-            log.info("site name result: \n{}", siteResult.stream().map(i -> i.get("name")).map(Objects::toString).collect(Collectors.joining("\r\n")));
-        });
-    }
+
 
     @Test
     void mergeExcelFiles() throws IOException, InvalidFormatException {
