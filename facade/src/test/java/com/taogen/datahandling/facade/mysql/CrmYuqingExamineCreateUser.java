@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade;
+package com.taogen.datahandling.facade.mysql;
 
 import com.taogen.commons.RandomUtils;
 import com.taogen.commons.crypto.HashUtils;

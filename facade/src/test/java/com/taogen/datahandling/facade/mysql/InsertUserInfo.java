@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade;
+package com.taogen.datahandling.facade.mysql;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

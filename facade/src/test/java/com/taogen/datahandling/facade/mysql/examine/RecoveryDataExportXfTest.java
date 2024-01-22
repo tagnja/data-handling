@@ -1,4 +1,4 @@
-package com.taogen.datahandling.facade;
+package com.taogen.datahandling.facade.mysql.examine;
 
 import com.taogen.commons.collection.CollectionUtils;
 import com.taogen.commons.datatypes.string.StringUtils;
