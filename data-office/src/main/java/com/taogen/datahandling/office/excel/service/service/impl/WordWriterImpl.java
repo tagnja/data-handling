@@ -39,9 +39,13 @@ public class WordWriterImpl implements WordWriter {
         BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
         int imageWidth = bufferedImage.getWidth();
         int imageHeight = bufferedImage.getHeight();
-        double scalePercent = 1;
-        int scaledWidth = (int) (imageWidth * scalePercent);
-        int scaledHeight = (int) (imageHeight * scalePercent);
+        int maxWidth = 450;
+        double scalePercent = 1.0;
+        if (imageWidth > maxWidth) {
+            scalePercent = maxWidth * 1.0 / imageWidth;
+        }
+        double scaledWidth = imageWidth * scalePercent;
+        double scaledHeight = imageHeight * scalePercent;
         imageRun.addPicture(new ByteArrayInputStream(imageBytes),
                 XWPFDocument.PICTURE_TYPE_PNG,
                 fileName,
