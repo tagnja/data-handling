@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author taogen
  */
 @Slf4j
-public class RecoveryDataPushWordTest extends ExportBaseTest {
+public class RecoveryDataPushErrorWordsTest extends ExportBaseTest {
     public static final Pattern PUSH_ERROR_WORDS_PATTERN = Pattern.compile(
             "(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+(\\s*)(=+》)(\\s*)(《|》|[(]|[)]|（|）|\\w|[\\u4E00-\\u9FA5])+", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
