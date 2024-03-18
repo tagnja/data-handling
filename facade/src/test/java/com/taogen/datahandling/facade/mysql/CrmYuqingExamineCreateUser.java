@@ -4,8 +4,10 @@ import com.taogen.commons.RandomUtils;
 import com.taogen.commons.crypto.HashUtils;
 import com.taogen.commons.datatypes.string.StringUtils;
 import com.taogen.commons.office.poi.ExcelUtils;
+import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.facade.base.ExportBaseTest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -158,8 +160,8 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
     @Test
     @Disabled
     void appendCustomerId() throws IOException {
-        String inputFilePath = getExportDirPath() + "镇江.xlsx";
-        Integer customerNameColNum = 1;
+        String inputFilePath = getExportDirPath() + "南通通州教体局-accounts.xlsx";
+        Integer customerNameColNum = 0;
         Integer appendCustomerIdColNum = 4;
         DataFormatter formatter = new DataFormatter();
         Set<String> totalNames = new LinkedHashSet<>();
@@ -173,7 +175,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
             }
             totalNames.add(customerName);
             try {
-                Map<String, Object> map = jdbcTemplate.queryForMap("select id, name from crm_customer where name = '" + customerName.trim() + "'");
+                Map<String, Object> map = jdbcTemplate.queryForMap("select id, name from crm.crm_customer where name = '" + customerName.trim() + "'");
                 if (map != null && map.get("id") != null) {
                     Cell cell = row.createCell(appendCustomerIdColNum);
                     cell.setCellValue(map.get("id").toString());
@@ -278,18 +280,37 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
 //        getInsertCustomerBatchSql(insertNames, provinceCode, cityCode, countyCode, sustainUserId, saleUserId);
     }
 
+
+    /**
+     * 舆情账号：
+     * - 密码随机
+     * - 空组。
+     * - 禁用
+     * 舆情账号角色：
+     * - 标准版
+     * 审核部门：客户名称
+     * 审核账号：
+     * - 空组
+     * - 随机密码
+     * - 审核字数：10万字
+     * 账号角色：
+     * - 普通角色、问问小舆
+     *
+     * @throws IOException
+     */
     @Test
     @Disabled
     void AddUserToYuqingAndExamine2() throws IOException {
-        String inputFilePath = getExportDirPath() + "镇江.xlsx";
-        String endDate = "2023-06-30";
+        String inputFilePath = getExportDirPath() + "南通通州教体局-accounts_2024-03-18_standard.xlsx";
+        String endDate = "2024-04-30";
         Integer characterNum = 100000;
         Integer writingNum = 20;
         Integer docConvertNum = 20;
-        Integer customerNameColNum = 1;
-        Integer userNameColNum = 2;
-        Integer passwordColNum = 3;
-        Integer customerIdColNum = 4;
+        // first column of Excel is 0
+        Integer customerNameColNum = 0;
+        Integer userNameColNum = 1;
+        Integer passwordColNum = 2;
+        Integer customerIdColNum = 3;
         DataFormatter formatter = new DataFormatter();
         Set<String> totalUserNames = new LinkedHashSet<>();
         Set<String> insertNames = new LinkedHashSet<>();
@@ -304,6 +325,8 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
             String password = RandomUtils.generateRandomAlphanumericStr(12);
             Cell passwordCell = row.createCell(passwordColNum);
             passwordCell.setCellValue(password);
+//            Cell passwordCell = row.getCell(passwordColNum);
+//            String password = formatter.formatCellValue(passwordCell).trim();
             boolean repeated = false;
             if (totalUserNames.contains(userName)) {
 //                log.debug("repeated customerName: {}", customerName);
@@ -313,6 +336,10 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
             if (!repeated) {
 //                System.out.println("update examine.sys_dept set writing_generate_limit = 30 where dept_name='" + name + "';");
 
+                /*
+                1. yuqing customer
+                if customerId exists in yuqing customer, skip
+                 */
                 Map<String, Object> queryForMap = null;
                 try {
                     queryForMap = jdbcTemplate.queryForMap("select * from console_data.customer_info where id=" + customerId + ";");
@@ -324,19 +351,32 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
                             "0, '" + endDate + "');\n";
                     System.out.println(insertCustomerInfoSql);
                 }
-                // yuqing user
-//                System.out.println("delete from console_data.sys_user where customer_id=" + customerId + ";");
-                String insertYuqingUserSql = "insert into console_data.sys_user " +
-                        "(name, pass, end_date, status, customer_id, group_id) values \n" +
-                        "('" + userName + "', '" + HashUtils.md5(password).toUpperCase() + "', '" + endDate + "', 1, " + customerId + ", 149);\n";
-                System.out.println(insertYuqingUserSql);
-                String yuqingUserId = "SELECT @yuqingUserId := LAST_INSERT_ID();\n";
-                System.out.println(yuqingUserId);
+                /*
+                2. Yuqing user
+                If username exists in yuqing user, skip
+                 */
+                try {
+                    queryForMap = jdbcTemplate.queryForMap("select * from console_data.sys_user where name='" + userName + "';");
+                    System.out.println("SELECT @yuqingUserId := " + queryForMap.get("id") + ";\n");
+                } catch (EmptyResultDataAccessException e) {
+                    String insertYuqingUserSql = "insert into console_data.sys_user " +
+                            "(name, pass, end_date, status, customer_id, group_id) values \n" +
+                            "('" + userName + "', '" + HashUtils.md5(password).toUpperCase() + "', '" + endDate + "', 1, " + customerId + ", 149);\n";
+                    System.out.println(insertYuqingUserSql);
+                    String yuqingUserId = "SELECT @yuqingUserId := LAST_INSERT_ID();\n";
+                    System.out.println(yuqingUserId);
+                }
+                /*
+                3. Yuqing userRole
+                 */
                 String insertYuqingUserRoleSql = "insert into console_data.sys_user_role " +
                         "(user_id, role_id) values \n" +
                         "(@yuqingUserId, 7);\n";
                 System.out.println(insertYuqingUserRoleSql);
-                // examine dept
+                /*
+                4. Examine dept
+                If customerId exists in examine dept, skip
+                 */
                 try {
                     queryForMap = jdbcTemplate.queryForMap("select * from examine.sys_dept where customer_id=" + customerId + ";");
                     System.out.println("SELECT @deptId := " + queryForMap.get("dept_id") + ";\n");
@@ -351,17 +391,26 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
                     System.out.println(deptId);
                 }
                 // examine user
-//                System.out.println("delete from examine.sys_user where dept_id=@deptId;");
-                String insertExamineUserSql = "insert into examine.sys_user " +
-                        "(dept_id, user_name, nick_name, user_type, password, status, " +
-                        "type, yuqing_user_id, yuqing_user_type, yuqing_group_id, end_date) values \n" +
-                        "(@deptId, '" + userName + "', '" + userName + "', 1, '" + new BCryptPasswordEncoder().encode(HashUtils.md5(password).toUpperCase()) + "', 0, " +
-                        "1, @yuqingUserId, 0, 149, '" + endDate + "');\n";
-                System.out.println(insertExamineUserSql);
-                String examineUserId = "SELECT @examineUserId := LAST_INSERT_ID();\n";
-                System.out.println(examineUserId);
-                String insertSysUserRoleSql = "insert into sys_user_role (user_id, role_id) values \n" +
-                        "(@examineUserId, 2), (@examineUserId, 126);\n";
+                /*
+                5. Examine user
+                If username exists in examine user, skip
+                 */
+                try {
+                    queryForMap = jdbcTemplate.queryForMap("select * from examine.sys_user where user_name='" + userName + "';");
+                    System.out.println("SELECT @examineUserId := " + queryForMap.get("user_id") + ";\n");
+                } catch (EmptyResultDataAccessException e) {
+
+                    String insertExamineUserSql = "insert into examine.sys_user " +
+                            "(dept_id, user_name, nick_name, user_type, password, status, " +
+                            "type, yuqing_user_id, yuqing_user_type, yuqing_group_id, end_date) values \n" +
+                            "(@deptId, '" + userName + "', '" + userName + "', 1, '" + new BCryptPasswordEncoder().encode(HashUtils.md5(password).toUpperCase()) + "', 0, " +
+                            "1, @yuqingUserId, 0, 149, '" + endDate + "');\n";
+                    System.out.println(insertExamineUserSql);
+                    String examineUserId = "SELECT @examineUserId := LAST_INSERT_ID();\n";
+                    System.out.println(examineUserId);
+                }
+                String insertSysUserRoleSql = "insert into examine.sys_user_role (user_id, role_id) values \n" +
+                        "(@examineUserId, 102);\n";
                 System.out.println(insertSysUserRoleSql);
             }
         };
