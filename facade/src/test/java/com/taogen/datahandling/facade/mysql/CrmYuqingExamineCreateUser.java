@@ -280,8 +280,23 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
 //        getInsertCustomerBatchSql(insertNames, provinceCode, cityCode, countyCode, sustainUserId, saleUserId);
     }
 
+    @Test
+    void removeYuqingAndExamineUserByUsername() throws IOException, InvalidFormatException {
+        LabelAndData read = excelReader.read(Arrays.asList(getExportDirPath() + "/南通通州教体局-accounts.xlsx"));
+        for (int i = 0; i < read.getValuesList().size(); i++) {
+            Object userName = read.getValuesList().get(i).get(1);
+            System.out.println(userName);
+            // Add createTime condition
+            jdbcTemplate.execute("delete from console_data.sys_user where name='" + userName + "' and gmt_create > '2024-03-18 14:00:00';");
+            // Add lastId condition
+            jdbcTemplate.execute("delete from examine.sys_user where user_name='" + userName + "' and user_id >= 3175;");
+        }
+
+    }
 
     /**
+     * 根据舆情客户，批量开审核账号
+     * <p>
      * 舆情账号：
      * - 密码随机
      * - 空组。
