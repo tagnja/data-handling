@@ -1,14 +1,14 @@
 package com.taogen.datahandling.office.excel.service.service.impl;
 
+import com.taogen.commons.office.poi.ExcelUtils;
 import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.office.excel.service.service.ExcelReader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,7 +28,10 @@ public class ExcelReaderImpl implements ExcelReader {
         List<List<Object>> data = new ArrayList<>();
         labelAndData.setValuesList(data);
         for (String filePath : inputFilePaths) {
-            try (Workbook workbook = new XSSFWorkbook(new File(filePath))) {
+            try (
+                    FileInputStream inputStream = new FileInputStream(filePath);
+                    Workbook workbook = ExcelUtils.createWorkbookByFileSuffix(inputStream, filePath.substring(filePath.lastIndexOf(".")));
+            ) {
                 Sheet sheet = workbook.getSheetAt(0);
                 Iterator<Row> iterator = sheet.iterator();
                 Row firstRow = iterator.next();
@@ -48,7 +51,10 @@ public class ExcelReaderImpl implements ExcelReader {
         DataFormatter formatter = new DataFormatter();
         List<List<Object>> data = new ArrayList<>();
         for (String filePath : inputFilePaths) {
-            try (Workbook workbook = new XSSFWorkbook(new File(filePath))) {
+            try (
+                    FileInputStream inputStream = new FileInputStream(filePath);
+                    Workbook workbook = ExcelUtils.createWorkbookByFileSuffix(inputStream, filePath.substring(filePath.lastIndexOf(".")));
+            ) {
                 Sheet sheet = workbook.getSheetAt(0);
                 Iterator<Row> iterator = sheet.iterator();
                 Row row;
