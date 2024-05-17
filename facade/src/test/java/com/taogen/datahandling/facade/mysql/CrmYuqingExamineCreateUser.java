@@ -296,41 +296,6 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
 
     }
 
-    @Test
-    void insertExamineAccount() throws IOException, InvalidFormatException {
-        LabelAndData labelAndData = excelReader.read(Arrays.asList(getExportDirPath() + "郁南县政府网站开通审核账号汇总表20240410_DATA_2.xlsx"));
-        List<List<Object>> data = labelAndData.getValuesList();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        String current = dateFormat.format(new Date());
-        for (List<Object> row : data) {
-            String phone = row.get(0).toString();
-            String name = row.get(1).toString();
-            Integer limit = Integer.parseInt(row.get(2).toString()) * 10000;
-            String password = phone.substring(phone.length() - 6);
-//            System.out.println(password);
-            String endDate = "2024-05-30";
-            Integer deptId = 157;
-            String customerName = "xxx";
-            Integer areaId = 445322;
-            Integer customerType = 1;
-            Integer type = 2;
-            String remark = "批量开审核账号-" + current;
-            String insertExamineUserSql = "insert into examine.sys_user " +
-                    "(dept_id, user_name, nick_name, phonenumber, password, status, " +
-                    "type,  create_by, end_date, remark, customer_name, customer_type, area_id, words_length, words_limit) values \n" +
-                    "(" + deptId + ", '" + phone + "', '" + name + "', '" + phone + "', '" + new BCryptPasswordEncoder().encode(HashUtils.md5(password).toUpperCase()) + "', 3, " +
-                    type + ", 1, '" + endDate + "','" + remark + "', '" + customerName + "', " + customerType + ", " + areaId + ", " + limit + "," + limit + ");\n";
-            System.out.println(insertExamineUserSql);
-            String examineUserId = "SELECT @examineUserId := LAST_INSERT_ID();\n";
-            System.out.println(examineUserId);
-            String updateExamineUserSql = "update examine.sys_user set yuqing_group_id = CONCAT('" + type + "-',  @examineUserId) where user_id = @examineUserId;";
-            System.out.println(updateExamineUserSql);
-            String insertSysUserRoleSql = "insert into examine.sys_user_role (user_id, role_id) values \n" +
-                    "(@examineUserId, 102);\n";
-            System.out.println(insertSysUserRoleSql);
-
-        }
-    }
 
     /**
      * 根据舆情客户，批量开审核账号
