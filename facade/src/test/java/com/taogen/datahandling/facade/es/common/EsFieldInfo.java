@@ -37,7 +37,7 @@ public enum EsFieldInfo {
     LEVEL_NAME("属性", "level_id", "level_name",
             value -> QueryBuilders.termsQuery("level_id", value)),
     DEP("客户标签", "dep", "dep",
-            value -> QueryBuilders.termsQuery("dep_id", value)),
+            value -> QueryBuilders.termsQuery("dep", value)),
     ;
 
     private String LabelName;
