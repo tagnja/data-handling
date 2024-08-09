@@ -324,6 +324,8 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
         Integer characterNum = 100000;
         Integer writingNum = 20;
         Integer docConvertNum = 20;
+        Integer customerId = 4593;
+        Integer groupId = 449;
         // first column of Excel is 0
         Integer customerNameColNum = 0;
         Integer userNameColNum = 1;
@@ -379,7 +381,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
                 } catch (EmptyResultDataAccessException e) {
                     String insertYuqingUserSql = "insert into console_data.sys_user " +
                             "(name, pass, end_date, status, customer_id, group_id) values \n" +
-                            "('" + userName + "', '" + HashUtils.md5(password).toUpperCase() + "', '" + endDate + "', 1, " + customerId + ", 149);\n";
+                            "('" + userName + "', '" + HashUtils.md5(password).toUpperCase() + "', '" + endDate + "', 1, " + customerId + ", " + groupId + ");\n";
                     System.out.println(insertYuqingUserSql);
                     String yuqingUserId = "SELECT @yuqingUserId := LAST_INSERT_ID();\n";
                     System.out.println(yuqingUserId);
@@ -422,7 +424,7 @@ public class CrmYuqingExamineCreateUser extends ExportBaseTest {
                             "(dept_id, user_name, nick_name, user_type, password, status, " +
                             "type, yuqing_user_id, yuqing_user_type, yuqing_group_id, end_date) values \n" +
                             "(@deptId, '" + userName + "', '" + userName + "', 1, '" + new BCryptPasswordEncoder().encode(HashUtils.md5(password).toUpperCase()) + "', 0, " +
-                            "1, @yuqingUserId, 0, 149, '" + endDate + "');\n";
+                            "1, @yuqingUserId, 0, " + groupId + ", '" + endDate + "');\n";
                     System.out.println(insertExamineUserSql);
                     String examineUserId = "SELECT @examineUserId := LAST_INSERT_ID();\n";
                     System.out.println(examineUserId);
