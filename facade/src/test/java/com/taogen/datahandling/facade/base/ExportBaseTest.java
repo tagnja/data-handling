@@ -3,6 +3,7 @@ package com.taogen.datahandling.facade.base;
 import com.taogen.commons.io.DirectoryUtils;
 import com.taogen.datahandling.facade.service.Sql2ExcelConverter;
 import com.taogen.datahandling.mysql.service.MySQLReader;
+import com.taogen.datahandling.mysql.service.MySQLWriter;
 import com.taogen.datahandling.office.excel.service.service.*;
 import com.taogen.datahandling.text.service.TextModifier;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,9 @@ public class ExportBaseTest {
 
     @Autowired(required = true)
     protected MySQLReader mysqlReader;
+
+    @Autowired(required = true)
+    protected MySQLWriter mySQLWriter;
 
     @Autowired(required = true)
     protected ExcelWriter excelWriter;
