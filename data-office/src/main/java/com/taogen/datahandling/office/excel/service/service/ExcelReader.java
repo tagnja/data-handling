@@ -1,6 +1,7 @@
 package com.taogen.datahandling.office.excel.service.service;
 
 import com.taogen.datahandling.common.vo.LabelAndData;
+import com.taogen.datahandling.office.excel.vo.ExcelReaderOption;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 import java.io.IOException;
@@ -21,6 +22,8 @@ public interface ExcelReader {
      * @throws InvalidFormatException
      */
     LabelAndData read(List<String> inputFilePaths) throws IOException, InvalidFormatException;
+
+    LabelAndData read(List<String> inputFilePaths, ExcelReaderOption options) throws IOException, InvalidFormatException;
 
     List<List<Object>> readToList(List<String> inputFilePaths) throws IOException, InvalidFormatException;
 }
