@@ -4,6 +4,8 @@ import com.taogen.datahandling.common.vo.LabelAndData;
 import com.taogen.datahandling.mysql.vo.SqlQueryParam;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.List;
+
 /**
  * @author taogen
  */
@@ -17,4 +19,6 @@ public interface MySQLReader {
      * @return
      */
     LabelAndData read(JdbcTemplate jdbcTemplate, SqlQueryParam sqlQueryParam);
+
+    List<String> getTableColumns(JdbcTemplate jdbcTemplate, String tableName);
 }

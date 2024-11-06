@@ -43,4 +43,13 @@ public class MySQLReaderImpl implements MySQLReader {
         return new LabelAndData(labels, valuesList);
     }
 
+    @Override
+    public List<String> getTableColumns(JdbcTemplate jdbcTemplate, String tableName) {
+        if (StringUtils.isBlank(tableName)) {
+            throw new RuntimeException("tableName cannot be null or empty");
+        }
+        String sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_NAME = ?";
+        List<String> columns = jdbcTemplate.queryForList(sql, String.class, tableName);
+        return columns;
+    }
 }
