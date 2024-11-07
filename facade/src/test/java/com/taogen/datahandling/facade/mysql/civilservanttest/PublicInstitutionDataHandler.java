@@ -37,4 +37,24 @@ public class PublicInstitutionDataHandler extends ExportBaseTest {
         mySQLWriter.write(jdbcTemplate, tableName, columns, lists);
 
     }
+
+    @Test
+    void zhejiangPublicInstitionExam() throws IOException, InvalidFormatException {
+        log.debug("jiangsuPublicInstitionExam");
+        String tableName = "zhejiang_public_institution_position";
+        List<String> columns = mysqlReader.getTableColumns(jdbcTemplate, tableName);
+        columns.remove(0);
+        log.debug("columns: {}", columns);
+        String inputFilePath = DirectoryUtils.getUserHomeDir() + "/Downloads/" + "2024年杭州市市属事业单位统一公开招聘计划表.xlsx";
+        log.debug("inputFilePath: {}", inputFilePath);
+        ExcelReaderOption excelReaderOption = new ExcelReaderOption();
+        excelReaderOption.setTotalSheetNum(1);
+        excelReaderOption.setLabelRow(3);
+        LabelAndData labelAndData = excelReader.read(Arrays.asList(inputFilePath), excelReaderOption);
+        log.debug("labels: {}", labelAndData.getLabels());
+        List<List<Object>> lists = labelAndData.getValuesList();
+//        log.debug("lists: {}", lists.stream().map(Objects::toString).collect(Collectors.joining("\n")));
+        mySQLWriter.write(jdbcTemplate, tableName, columns, lists);
+
+    }
 }
